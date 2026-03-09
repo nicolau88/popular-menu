@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pizzería Popular | La Plata</title>
+    <title>Pizzería Popular | Pedidos Online</title>
     
     <link rel="icon" href="Pizzeria_Popular_1.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,10 +13,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <style>
-        :root { --bg-body: #0f0f0f; --primary: #FFC107; --accent: #FF3D00; --white: #ffffff; --border-1: #FFC107; --border-2: #FF3D00; --border-3: #ffffff; --border-4: #00E5FF; }
+        :root { --bg-body: #0f0f0f; --primary: #FFC107; --accent: #FF3D00; --white: #ffffff; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-body); color: var(--white); margin: 0; padding: 0; background-image: radial-gradient(circle at 10% 20%, rgba(255, 61, 0, 0.15) 0%, transparent 30%), radial-gradient(circle at 90% 80%, rgba(255, 193, 7, 0.15) 0%, transparent 30%); background-attachment: fixed; padding-bottom: 100px; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-body); color: var(--white); margin: 0; padding: 0; background-image: radial-gradient(circle at 10% 20%, rgba(255, 61, 0, 0.15) 0%, transparent 30%), radial-gradient(circle at 90% 80%, rgba(255, 193, 7, 0.15) 0%, transparent 30%); background-attachment: fixed; padding-bottom: 120px; }
         
+        /* HEADER Y PORTADA */
         header { text-align: center; padding: 40px 20px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.85), var(--bg-body)), url('https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=1000&auto=format&fit=crop'); background-size: cover; background-attachment: fixed; border-bottom: 2px solid var(--primary); position: relative; }
         #status-badge { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; border: 1px solid #555; backdrop-filter: blur(5px); z-index: 200; }
         .logo-wrapper { width: 170px; height: 170px; margin: 0 auto 20px; border-radius: 50%; border: 4px solid var(--primary); background-color: #fff; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(255,193,7,0.5); }
@@ -29,19 +30,9 @@
         .social-bar { display: flex; justify-content: center; gap: 20px; margin: 25px 0; }
         .social-btn { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; text-decoration: none; background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); transition: transform 0.2s; }
         .social-btn:hover { transform: scale(1.1); border-color: var(--primary); }
-        .s-whatsapp i { color: #25D366; } .s-instagram i { background: -webkit-linear-gradient(#fdf497, #fd5949, #d6249f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; } .s-maps i { color: #4285F4; }
-
-        .cta-container { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .cta-label { display: block; font-size: 1rem; color: #fff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; animation: bounce 2s infinite; }
+        .s-whatsapp i { color: #25D366; } .s-instagram i { background: -webkit-linear-gradient(#fdf497, #fd5949, #d6249f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .btn-group { display: flex; flex-direction: column; gap: 15px; width: 100%; align-items: center; }
-        @media (min-width: 600px) { .btn-group { flex-direction: row; justify-content: center; } }
-
-        .btn-app-order { display: inline-block; background: linear-gradient(45deg, var(--primary), #FFAB00); color: #000; padding: 15px 25px; border-radius: 50px; text-decoration: none; font-weight: 800; font-family: 'Oswald', sans-serif; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 15px rgba(255,193,7,0.3); border: 2px solid rgba(255,255,255,0.2); transition: transform 0.2s; width: 90%; max-width: 300px; text-align: center; }
-        .btn-suc-2 { background: linear-gradient(45deg, #FF5722, #FF3D00); color: white; box-shadow: 0 0 15px rgba(255, 87, 34, 0.3); }
-        .btn-app-order:hover { transform: scale(1.05); }
-        @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-5px);} }
-
+        /* NAVEGACIÓN STICKY */
         .sticky-nav { position: sticky; top: 10px; z-index: 100; display: flex; justify-content: center; gap: 10px; margin: 10px 0 30px; flex-wrap: wrap; }
         .nav-pill { background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-family: 'Oswald', sans-serif; font-size: 0.9rem; border: 1px solid #333; backdrop-filter: blur(5px); text-transform: uppercase; }
         .nav-pill:hover { background: var(--primary); color: #000; border-color: var(--primary); }
@@ -51,121 +42,105 @@
         .section-title i { color: var(--primary); font-size: 1.5rem; }
         .subsection-title { font-family: 'Oswald', sans-serif; font-size: 1.3rem; color: #fff; margin: 40px 0 15px; padding-left: 10px; border-left: 3px solid var(--primary); background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent); padding-top: 5px; padding-bottom: 5px; }
 
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .pizza-card { background: rgba(35,35,35,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s; }
-        .pizza-card:nth-child(4n+1) { border-left: 4px solid var(--border-1); }
-        .pizza-card:nth-child(4n+2) { border-left: 4px solid var(--border-2); }
-        .pizza-card:nth-child(4n+3) { border-left: 4px solid var(--border-3); }
-        .pizza-card:nth-child(4n+4) { border-left: 4px solid var(--border-4); }
-        .highlight-card { background: linear-gradient(135deg, rgba(255,193,7,0.15), rgba(0,0,0,0.8)); border: 2px solid var(--primary) !important; box-shadow: 0 0 20px rgba(255,193,7,0.2); transform: scale(1.02); }
-        .highlight-card .pizza-header h3 { color: var(--primary) !important; font-size: 1.6rem !important; }
-        .pizza-header { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .pizza-header h3 { margin: 0; font-size: 1.3rem; color: #fff; font-family: 'Oswald', sans-serif; letter-spacing: 0.5px; }
-        .pizza-header p { margin: 5px 0 0; font-size: 0.9rem; color: #aaa; }
-        .price-row { display: flex; height: 100%; }
-        .price-box { flex: 1; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-        .price-box.cold { background: rgba(79,195,247,0.08); border-right: 1px solid rgba(255,255,255,0.05); }
-        .price-box.hot { background: rgba(255,61,0,0.08); }
-        .price-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; opacity: 0.8; }
-        .price-value { font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 500; }
-        .txt-cold { color: #4FC3F7; } .txt-hot { color: #FF5722; }
-
-        .list-group { background: rgba(35,35,35,0.7); border-radius: 12px; padding: 5px 20px; border: 1px solid rgba(255,255,255,0.08); }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        /* LISTAS Y ELEMENTOS DEL MENÚ (Empanadas, Bebidas) */
+        .list-group { background: rgba(35,35,35,0.7); border-radius: 12px; padding: 5px 20px; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px); }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .list-item:last-child { border-bottom: none; }
-        .list-name { font-size: 1rem; color: #eee; }
+        .list-name { font-size: 1.1rem; color: #eee; font-weight: 500; font-family: 'Oswald', sans-serif;}
         .list-price { color: var(--primary); font-weight: 700; font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
 
-        .promo-list-card { background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%); border: 1px solid var(--primary); padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .promo-tag { background-color: var(--accent); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-right: 5px; }
-        .promo-details { font-size: 0.85rem; color: #ccc; display: block; margin-top: 5px; }
+        .promo-tag { background-color: var(--accent); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-right: 5px; display: inline-block; margin-bottom: 5px;}
 
-        #loading-msg { text-align: center; font-size: 1.5rem; color: var(--primary); padding: 50px; font-family: 'Oswald', sans-serif; animation: bounce 1s infinite; }
-        #debug-info { display: none; background: #220000; color: #ffaaaa; padding: 20px; margin: 20px auto; max-width: 800px; border: 1px solid red; font-family: monospace; }
+        /* STEPPER NORMAL (+/-) */
+        .stepper { display: flex; align-items: center; background: #222; border-radius: 8px; border: 1px solid #444; overflow: hidden; height: 36px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .stepper button { background: none; border: none; color: var(--primary); width: 36px; height: 100%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .stepper button:hover { background: rgba(255,193,7,0.15); }
+        .stepper button:active { background: var(--primary); color: #000; }
+        .stepper .qty-display { width: 30px; text-align: center; font-weight: bold; font-family: 'Oswald', sans-serif; font-size: 1.1rem; color: #fff; transition: color 0.3s; }
 
-        .reviews-section { margin-top: 60px; text-align: center; padding: 20px; }
-        .reviews-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
-        .review-card { background: #1a1a1a; padding: 20px; border-radius: 10px; width: 280px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .stars { color: gold; margin-bottom: 10px; }
-        .review-text { font-style: italic; font-size: 0.9rem; color: #ccc; }
-        .review-author { margin-top: 10px; font-weight: bold; color: var(--primary); font-size: 0.85rem; }
+        #loading-msg { text-align: center; font-size: 1.2rem; color: #aaa; padding: 50px; font-family: 'Roboto', sans-serif; }
+
+        /* BOTÓN DE CARRITO (VERDE WHATSAPP Y PULSO) */
+        #cart-btn { position: fixed; bottom: 20px; right: 20px; background: #25D366; color: #fff; border: none; border-radius: 50px; padding: 15px 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(37, 211, 102, 0.4); z-index: 999; display: none; align-items: center; gap: 10px; font-family: 'Oswald', sans-serif; animation: pulse-green 2s infinite; text-transform: uppercase; transition: transform 0.2s; }
+        #cart-btn:hover { transform: scale(1.05); background: #20bd5a; }
+        #cart-btn:active { transform: scale(0.95); }
+        .cart-badge { background: #fff; color: #25D366; border-radius: 50%; padding: 2px 8px; font-size: 0.95rem; font-weight: 900; }
+        
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; justify-content: flex-end; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a1a; width: 100%; max-width: 400px; height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; border-left: 2px solid var(--primary); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px; }
+        .modal-header h2 { margin: 0; font-family: 'Oswald', sans-serif; color: var(--primary); }
+        .close-btn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #333; }
+        .cart-item-title { font-weight: bold; font-size: 0.95rem; }
+        .cart-item-variant { font-size: 0.8rem; color: #ccc; background: #333; padding: 3px 6px; border-radius: 4px; margin-top:5px; display:inline-block; max-width: 100%; word-wrap: break-word; line-height: 1.3;}
+        .cart-item-price { color: var(--primary); font-family: 'Oswald', sans-serif; }
+        
+        .cart-total { font-size: 1.5rem; font-family: 'Oswald', sans-serif; text-align: right; margin: 20px 0; color: var(--primary); }
+
+        .checkout-form { display: flex; flex-direction: column; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 0.85rem; color: #ccc; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px; border-radius: 8px; border: 1px solid #444; background: #0f0f0f; color: #fff; font-family: 'Roboto', sans-serif; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+        .btn-submit { background: #25D366; color: #fff; border: none; padding: 15px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; margin-top: 10px; cursor: pointer; font-family: 'Oswald', sans-serif; text-transform: uppercase; display: flex; justify-content: center; gap: 10px; transition: background 0.2s;}
+        .btn-submit:hover { background: #1EBE5D; }
+        .btn-submit:disabled { background: #555; color: #888; cursor: not-allowed; }
 
         footer { text-align: center; padding: 40px 20px; color: #888; font-size: 0.9rem; margin-top: 50px; border-top: 1px solid #222; background-color: #050505; }
-        .footer-info p { margin: 8px 0; font-size: 1rem; }
-        .footer-icon { color: var(--primary); margin-right: 8px; }
-        .share-btn { display: inline-block; margin-top: 15px; padding: 8px 15px; border: 1px solid #444; border-radius: 20px; color: #aaa; text-decoration: none; font-size: 0.85rem; }
-        .share-btn:hover { background: #222; color: white; }
-
-        #scrollTopBtn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 99; font-size: 1.5rem; border: none; outline: none; background-color: var(--primary); color: #000; cursor: pointer; padding: 15px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: transform 0.3s; }
-        #scrollTopBtn:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
 
-    <button onclick="topFunction()" id="scrollTopBtn" title="Volver arriba"><i class="fas fa-arrow-up"></i></button>
-
     <header>
         <div id="status-badge">Cargando...</div>
-        <div class="logo-wrapper"><img src="Pizzeria_Popular_1.png" alt="Logo Pizzería Popular"></div>
+        <div class="logo-wrapper"><img src="Pizzeria_Popular_1.png" alt="Logo Pizzería Popular" onerror="this.src='https://via.placeholder.com/170?text=Logo'"></div>
         <h1>Pizzería Popular</h1>
         <div class="subtitle">PIZZA ARGENTINA</div>
         
         <div class="city-location"><i class="fas fa-map-marker-alt"></i> 6 esquina 66 <strong>La Plata</strong></div>
-        <div class="city-location"><i class="fas fa-map-marker-alt"></i> Diagonal 76 y 43 <strong>La Plata</strong></div>
-        <p><i class="far fa-clock footer-icon"></i> Mar a Dom: 19:00hs a 23:00hs</p>
-        <p><a href="https://api.whatsapp.com/send?phone=542215713693" style="color:#888; text-decoration:none;"><i class="fas fa-phone footer-icon"></i> 221-571-3693</a></p>
+        <p><i class="far fa-clock"></i> Mar a Dom: 19:00hs a 23:00hs</p>
 
         <div class="social-bar">
             <a href="https://api.whatsapp.com/send?phone=542215713693" class="social-btn s-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
             <a href="https://www.instagram.com/pizzeriapopular/" class="social-btn s-instagram" target="_blank"><i class="fab fa-instagram"></i></a>
-            <a href="https://www.google.com.ar/maps/place/Pizzer%C3%ADa+Popular/@-34.9248161,-57.9363498,17z" class="social-btn s-maps" target="_blank"><i class="fas fa-map-marker-alt"></i></a>
-        </div>
-        
-        <div class="cta-container">
-            <span class="cta-label">👇 Hacé tu pedido online 👇</span>
-            <div class="btn-group">
-                 <a href="https://api.whatsapp.com/send?phone=542215713693" class="btn-app-order" target="_blank">
-                    <i class="fas fa-store"></i> Pedí a 6 y 66
-                </a>
-                <a href="http://wa.me/message/GK43ZXOUJRCHM1" class="btn-app-order btn-suc-2" target="_blank">
-                    <i class="fas fa-store"></i> Pedí a Diag 76
-                </a>
-            </div>
         </div>
     </header>
 
     <div class="sticky-nav">
-        <a href="#promos" class="nav-pill">🔥 Promos</a>
-        <a href="#pizzas" class="nav-pill">🍕 Pizzas</a>
         <a href="#empanadas" class="nav-pill">🥟 Empanadas</a>
+        <a href="#fatays" class="nav-pill">⭐ Fatays</a>
+        <a href="#pizzas" class="nav-pill">🍕 Pizzas</a>
+        <a href="#promos" class="nav-pill">🔥 Promos</a>
         <a href="#bebidas" class="nav-pill">🥤 Bebidas</a>
     </div>
 
     <div class="menu-container">
         
-        <div id="loading-msg"><i class="fas fa-spinner fa-spin"></i> Cargando menú actualizado...</div>
-        <div id="debug-info"></div>
+        <div id="loading-msg"><i class="fas fa-spinner fa-spin"></i> Conectando con el menú en vivo...</div>
 
-        <div style="display:flex; justify-content:center; gap:20px; margin-bottom:30px; font-size:0.9rem; background:rgba(255,255,255,0.05); padding:8px 20px; border-radius:50px; width:fit-content; margin-left:auto; margin-right:auto;">
-            <span class="txt-cold"><i class="fas fa-snowflake"></i> P/HORNEAR</span>
-            <span class="txt-hot"><i class="fas fa-fire"></i> HORNEADA</span>
-        </div>
-
-        <h2 id="promos" class="section-title"><i class="fas fa-tags"></i> Promociones <span style="font-size:1rem; color:#aaa; margin-left:10px; font-weight:400; font-family:'Roboto'">(Para Hornear)</span></h2>
-        <div id="promos-grid" class="menu-grid"></div>
-
-        <h2 id="pizzas" class="section-title"><i class="fas fa-pizza-slice"></i> Nuestras Pizzas</h2>
-        <div id="pizzas-grid" class="menu-grid"></div>
-
-        <h2 id="empanadas" class="section-title"><i class="fas fa-utensils"></i> Empanadas <span style="font-size:1rem; color:#aaa; margin-left:10px; font-weight:400; font-family:'Roboto'">(Al Horno)</span></h2>
+        <h2 id="empanadas" class="section-title"><i class="fas fa-utensils"></i> Empanadas</h2>
         <div class="subsection-title" style="border-left-color: var(--primary);">CLÁSICAS</div>
         <div id="empanadas-clasicas-list" class="list-group"></div>
         <div class="subsection-title" style="border-left-color: var(--accent);">PREMIUM</div>
         <div id="empanadas-premium-list" class="list-group"></div>
 
-        <h2 class="section-title"><i class="fas fa-star"></i> Fatays</h2>
+        <h2 id="fatays" class="section-title"><i class="fas fa-star"></i> Fatays</h2>
         <div id="fatays-list" class="list-group"></div>
+
+        <h2 id="pizzas" class="section-title"><i class="fas fa-pizza-slice"></i> Nuestras Pizzas</h2>
+        <div id="pizzas-list"></div>
         
+        <h2 id="promos" class="section-title"><i class="fas fa-tags"></i> Promociones</h2>
+        <div id="promos-list" class="list-group"></div>
+
         <h2 id="bebidas" class="section-title"><i class="fas fa-glass-cheers"></i> Bebidas</h2>
         <div class="subsection-title">SIN ALCOHOL</div>
         <div id="bebidas-sin-alcohol-list" class="list-group"></div>
@@ -173,44 +148,159 @@
         <div id="cervezas-list" class="list-group"></div>
     </div>
 
-    <div class="reviews-section">
-        <h2 class="section-title" style="justify-content:center;">Lo que dicen nuestros clientes</h2>
-        <div class="reviews-grid">
-            <div class="review-card"><div class="stars">★★★★★</div><p class="review-text">"Excelente relación precio-calidad. La pizza es abundante y muy rica. Siempre llega a tiempo."</p><div class="review-author">- Juan P.</div></div>
-            <div class="review-card"><div class="stars">★★★★★</div><p class="review-text">"Las mejores empanadas de la zona, la de carne cortada a cuchillo es un espectáculo. Súper recomendables."</p><div class="review-author">- María G.</div></div>
-            <div class="review-card"><div class="stars">★★★★★</div><p class="review-text">"Muy buena atención y las promos para hornear te salvan la cena. Los fatay también son buenísimos."</p><div class="review-author">- Carlos M.</div></div>
+    <footer>
+        <p><i class="fas fa-map-pin"></i> Calle 6 esquina 66, La Plata</p>
+        <p>Pizzería Popular © 2026</p>
+    </footer>
+
+    <button id="cart-btn" onclick="toggleCart()">
+        <i class="fas fa-shopping-cart"></i> FINALIZÁ TU PEDIDO <span id="cart-count" class="cart-badge">0</span>
+    </button>
+
+    <div id="cart-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tu Pedido 🍕</h2>
+                <button class="close-btn" onclick="toggleCart()">&times;</button>
+            </div>
+            
+            <div id="cart-items" style="flex: 1; overflow-y: auto;">
+                <p style="color:#aaa; text-align:center;">El carrito está vacío</p>
+            </div>
+            
+            <div class="cart-total" id="cart-total">Total: $0</div>
+
+            <div class="checkout-form" id="checkout-form" style="display:none;">
+                <h3 style="border-bottom: 1px solid #333; padding-bottom:10px; font-family:'Oswald'; color:var(--primary);">Datos de Entrega</h3>
+                
+                <div class="form-group">
+                    <label>Nombre y Apellido *</label>
+                    <input type="text" id="cli-nombre" placeholder="Ej: Juan Pérez" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Teléfono de contacto *</label>
+                    <input type="tel" id="cli-telefono" placeholder="Ej: 221 123 4567" required>
+                </div>
+
+                <div class="form-group">
+                    <label>¿Cómo te entregamos? *</label>
+                    <select id="cli-entrega" onchange="toggleDeliveryFields(); updateCartUI();">
+                        <option value="delivery">Envío a Domicilio (Delivery)</option>
+                        <option value="retiro">Retiro por el Local</option>
+                    </select>
+                </div>
+
+                <div id="delivery-fields" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-group">
+                        <label>Dirección (Calle y Número) *</label>
+                        <input type="text" id="cli-direccion" placeholder="Ej: Calle 4 N° 1234">
+                    </div>
+                    <div class="form-group">
+                        <label>Entre Calles *</label>
+                        <input type="text" id="cli-entrecalles" placeholder="Ej: e/ 57 y 58">
+                    </div>
+                    <div class="form-group">
+                        <label>Depto / Piso (Opcional)</label>
+                        <input type="text" id="cli-depto" placeholder="Ej: 3ro B">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>¿Para cuándo lo querés? *</label>
+                    <select id="cli-horario" onchange="toggleHorarioFields()">
+                        <option value="Lo antes posible">Lo antes posible</option>
+                        <option value="Programado">Programar horario...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="horario-exacto-container" style="display:none;">
+                    <label>Horario preferido:</label>
+                    <input type="time" id="cli-horario-exacto">
+                </div>
+
+                <div class="form-group">
+                    <label>Medio de Pago *</label>
+                    <select id="cli-pago" onchange="togglePagoFields()">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia (Alias/CBU)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="efectivo-fields" style="display: flex;">
+                    <label>¿Con cuánto abonás? (Para llevarte cambio) *</label>
+                    <input type="number" id="cli-abona" placeholder="Ej: 20000">
+                </div>
+
+                <div id="info-transferencia" style="display:none; background: rgba(79,195,247,0.1); border: 1px solid #4FC3F7; padding: 10px; border-radius: 8px; font-size: 0.85rem;">
+                    <strong style="color: #4FC3F7;">Alias para transferir:</strong> <br>
+                    <span id="display-alias" style="font-size: 1.1rem; font-weight: bold; letter-spacing: 1px;">Consultar por WhatsApp</span>
+                    <p style="margin: 5px 0 0 0; color: #ccc;">Recordá adjuntar el comprobante al enviarnos el mensaje.</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Aclaraciones para la cocina (Opcional)</label>
+                    <input type="text" id="cli-notas" placeholder="Ej: Sin aceitunas, etc.">
+                </div>
+
+                <button class="btn-submit" onclick="enviarPedido()">
+                    <i class="fab fa-whatsapp"></i> Enviar Pedido por WhatsApp
+                </button>
+            </div>
         </div>
     </div>
 
-    <footer>
-        <div style="margin-bottom: 40px;">
-            <span class="cta-label" style="color:#aaa;">¿Te tentaste? 👇</span>
-            <div class="btn-group">
-                 <a href="https://menu.fu.do/popularpizzas" class="btn-app-order" target="_blank">
-                    <i class="fas fa-store"></i> Pedí a 6 y 66
-                </a>
-                <a href="https://api.whatsapp.com/message/GK43ZXOUJRCHM1?autoload=1&app_absent=0&utm_source=ig" class="btn-app-order btn-suc-2" target="_blank">
-                    <i class="fas fa-store"></i> Pedí a Diag 76
-                </a>
+    <div id="docena-modal" class="modal-overlay" style="z-index: 1001; align-items: center; justify-content: center;">
+        <div class="modal-content" style="height: 90%; max-height: 700px; width: 95%; max-width: 450px; border-radius: 12px; border: 1px solid var(--primary); padding: 0; background: #0f0f0f; overflow: hidden;">
+            
+            <div style="padding: 15px 20px; background: #1a1a1a; border-bottom: 1px solid #333; position: relative;">
+                <button onclick="closeDocenaModal()" style="position: absolute; right: 15px; top: 15px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                <h2 id="docena-title" style="margin: 0; font-family: 'Oswald', sans-serif; color: var(--primary); font-size: 1.3rem;">Armá tu Docena</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <div style="font-weight: bold; font-size: 1.1rem;">Llevás: <span id="docena-count" style="color: var(--accent); font-size: 1.3rem;">0</span> <span style="color:#aaa; font-size:0.9rem;">/ 12</span></div>
+                    <div id="docena-total-price" style="color: var(--primary); font-family: 'Oswald', sans-serif; font-size: 1.4rem;">$0</div>
+                </div>
+            </div>
+
+            <div id="docena-flavors-container" style="flex: 1; overflow-y: auto; padding: 0 20px 20px;">
+                </div>
+            
+            <div style="padding: 15px 20px; background: #1a1a1a; border-top: 1px solid #333;">
+                <button id="btn-confirm-docena" class="btn-submit" onclick="confirmDocena()" style="width: 100%; margin: 0;" disabled>AGREGAR AL CARRITO</button>
             </div>
         </div>
-        <div class="footer-info">
-            <p><i class="fas fa-map-pin footer-icon"></i> Calle 6 y 66 | Diag 76 y 43</p>
-            <p><i class="far fa-clock footer-icon"></i> Mar a Dom: 19:00hs a 23:00hs</p>
-        </div>
-        <a href="https://api.whatsapp.com/send?text=Mirá el menú de Pizzería Popular: https://pizzeriapopular.ar" class="share-btn" target="_blank"><i class="fas fa-share-alt"></i> Enviar a un amigo</a>
-        <p style="margin-top:20px; font-size:0.8rem;">Pizzería Popular © 2025</p>
-    </footer>
+    </div>
 
     <script>
-        // TU LINK REAL DE LA HOJA MAESTRA
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
+        const numeroWhatsApp = "542215713693"; 
+        
+        let cart = [];
+        let costoDeEnvio = 0; 
+        let aliasTransferencia = "Consultar por WhatsApp";
+
+        let dbClasicas = [];
+        let dbPremium = [];
+        let precioBaseClasica = 0;
+
+        let pendingDocena = null;
+        let docenaSelection = {};
+        let docenaTotalQty = 0;
+        let docenaExtraPrice = 0;
 
         function normalize(str) {
             if (!str) return '';
-            return str.trim().toUpperCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/\s+/g, ' ');
+            return str.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ');
+        }
+
+        function cleanPrice(priceStr) {
+            if (!priceStr) return 0;
+            return parseInt(priceStr.toString().replace(/[^0-9]/g, '')) || 0;
+        }
+
+        function formatPrice(num) {
+            if (!num || num === 0) return '';
+            return '$' + num.toLocaleString('es-AR');
         }
 
         Papa.parse(csvUrl, {
@@ -218,34 +308,18 @@
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
-                const data = results.data;
-                if (data && data.length > 0) {
-                    renderMenu(data);
-                } else {
-                    document.getElementById('debug-info').innerHTML = "El archivo está vacío.";
-                    document.getElementById('debug-info').style.display = 'block';
-                }
                 document.getElementById('loading-msg').style.display = 'none';
+                renderMenu(results.data);
             },
             error: function(err) {
-                document.getElementById('debug-info').innerHTML = "Error al cargar: " + err;
-                document.getElementById('debug-info').style.display = 'block';
+                document.getElementById('loading-msg').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:red;"></i> Error al conectar con Google Sheets.';
             }
         });
 
-        function formatPrice(price) {
-            if (!price) return '';
-            // Quita cualquier símbolo que no sea número (como $ o .)
-            let clean = price.toString().replace(/[^0-9]/g, '');
-            if (!clean) return price; 
-            return '$' + parseInt(clean).toLocaleString('es-AR');
-        }
-
         function renderMenu(items) {
-            // DICCIONARIO DE SINÓNIMOS (MAPEO COMPLETO)
             const containerMap = {
-                'promos-grid': ['PROMOS', 'PROMOCIONES', 'PROMO', 'SECCION PROMOCIONES'],
-                'pizzas-grid': ['PIZZAS', 'PIZZA', 'NUESTRAS PIZZAS', 'SECCION PIZZAS'],
+                'promos-list': ['PROMOS', 'PROMOCIONES', 'PROMO', 'SECCION PROMOCIONES'],
+                'pizzas-list': ['PIZZAS', 'PIZZA', 'NUESTRAS PIZZAS', 'SECCION PIZZAS'],
                 'empanadas-clasicas-list': ['EMPANADAS CLASICAS', 'EMPANADAS', 'CLASICAS', 'EMPANADAS_CLASICAS'],
                 'empanadas-premium-list': ['EMPANADAS PREMIUM', 'PREMIUM', 'EMPANADAS ESPECIALES', 'EMPANADAS_PREMIUM'],
                 'fatays-list': ['FATAYS', 'FATAY', 'FATAY (CARNE)'],
@@ -255,111 +329,493 @@
 
             items.forEach(item => {
                 if (!item.SECCION || !item.NOMBRE) return;
-                
                 const cleanSection = normalize(item.SECCION).replace(/_/g, ' ');
-                let targetId = null;
+                const isDocena = item.NOMBRE.toUpperCase().includes('DOCENA');
 
-                for (const [id, synonyms] of Object.entries(containerMap)) {
-                    if (synonyms.includes(cleanSection)) {
-                        targetId = id;
-                        break;
+                if (cleanSection === 'CONFIGURACION') {
+                    if (normalize(item.NOMBRE) === 'ENVIO') costoDeEnvio = cleanPrice(item.PRECIO_1);
+                    if (normalize(item.NOMBRE) === 'ALIAS') {
+                        aliasTransferencia = item.DESCRIPCION || item.PRECIO_1 || "Consultar por WhatsApp";
+                        document.getElementById('display-alias').innerText = aliasTransferencia;
                     }
+                    return; 
                 }
-                
+
+                if (cleanSection.includes('CLASICAS') && !isDocena) {
+                    dbClasicas.push(item);
+                    if (precioBaseClasica === 0) precioBaseClasica = cleanPrice(item.PRECIO_1);
+                }
+                if (cleanSection.includes('PREMIUM') && !isDocena) {
+                    dbPremium.push(item);
+                }
+
+                let targetId = null;
+                for (const [id, synonyms] of Object.entries(containerMap)) {
+                    if (synonyms.includes(cleanSection)) { targetId = id; break; }
+                }
                 if (!targetId) return; 
-                const container = document.getElementById(targetId);
-
-                let html = '';
-                const p1 = formatPrice(item.PRECIO_1);
-                const p2 = formatPrice(item.PRECIO_2);
-                const isPopular = item.NOMBRE.toUpperCase().includes('POPULAR');
-                const highlightClass = isPopular ? 'highlight-card' : '';
                 
-                // Estilos dinámicos para tarjetas populares
-                const highlightStyle = isPopular 
-                    ? 'style="background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%); border: 2px solid gold;"' 
-                    : 'style="background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%); border: 1px solid var(--primary);"';
+                const container = document.getElementById(targetId);
+                let html = '';
+                
+                const p1Num = cleanPrice(item.PRECIO_1);
+                const p2Num = cleanPrice(item.PRECIO_2);
+                const safeName = item.NOMBRE.replace(/'/g, "\\'");
+                const isPopular = item.NOMBRE.toUpperCase().includes('POPULAR');
 
-                // RENDERIZADO
-                if (targetId === 'pizzas-grid') {
+                // 1. NUEVO FORMATO DE PIZZAS (TARJETAS SEPARADAS CON PRECIO AL LADO)
+                if (targetId === 'pizzas-list') {
                     html = `
-                    <div class="pizza-card ${highlightClass}">
-                        <div class="pizza-header">
-                            <h3>${item.NOMBRE}</h3>
-                            <p>${item.DESCRIPCION || ''}</p>
+                    <div style="background: #1a1a1a; border-radius: 12px; margin-bottom: 16px; border: 1px solid ${isPopular ? 'gold' : '#333'}; box-shadow: 0 4px 6px rgba(0,0,0,0.2); overflow: hidden;">
+                        
+                        <div style="padding: 15px; background: ${isPopular ? 'rgba(255,215,0,0.05)' : 'transparent'};">
+                            <h3 style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 1.3rem; color: ${isPopular ? 'var(--primary)' : '#fff'};">
+                                ${isPopular ? '<i class="fas fa-star" style="color:gold; font-size:1rem; margin-right:5px;"></i>' : ''}${item.NOMBRE}
+                            </h3>
+                            ${item.DESCRIPCION ? `<p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #aaa;">${item.DESCRIPCION}</p>` : ''}
                         </div>
-                        <div class="price-row">
-                            <div class="price-box cold"><span class="price-label txt-cold">❄️ P/Hornear</span><span class="price-value txt-cold">${p1}</span></div>
-                            <div class="price-box hot"><span class="price-label txt-hot">🔥 Horneada</span><span class="price-value txt-hot">${p2}</span></div>
+
+                        <div style="background: #0f0f0f; padding: 12px 15px; border-top: 1px solid #222;">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #4FC3F7; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">❄️ Para Hornear</span>
+                                    <span style="color: #fff; font-family: 'Oswald', sans-serif; font-size: 1rem; opacity: 0.9;">${formatPrice(p1Num)}</span>
+                                </div>
+                                <div class="stepper" style="height: 32px;">
+                                    <button onclick="updateMenuQty('${safeName}', ${p1Num}, 'Para Hornear', -1)"><i class="fas fa-minus"></i></button>
+                                    <span class="qty-display" data-name="${safeName}" data-variant="Para Hornear">0</span>
+                                    <button onclick="updateMenuQty('${safeName}', ${p1Num}, 'Para Hornear', 1)"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+
+                            ${p2Num > 0 ? `
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #333; margin-top: 10px; padding-top: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #FF5722; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">🔥 Horneada</span>
+                                    <span style="color: #fff; font-family: 'Oswald', sans-serif; font-size: 1rem; opacity: 0.9;">${formatPrice(p2Num)}</span>
+                                </div>
+                                <div class="stepper" style="height: 32px;">
+                                    <button onclick="updateMenuQty('${safeName}', ${p2Num}, 'Horneada', -1)"><i class="fas fa-minus"></i></button>
+                                    <span class="qty-display" data-name="${safeName}" data-variant="Horneada">0</span>
+                                    <button onclick="updateMenuQty('${safeName}', ${p2Num}, 'Horneada', 1)"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>`;
                 } 
-                else if (targetId === 'promos-grid') {
+                // 2. FORMATO PROMOS
+                else if (targetId === 'promos-list') {
                     html = `
-                    <div class="promo-list-card ${highlightClass}" ${highlightStyle}>
-                        <div style="flex:1">
-                            <span class="promo-tag" ${isPopular ? 'style="background-color:gold; color:black;"' : ''}>${isPopular ? 'POPULAR' : 'PROMO'}</span>
-                            <span style="font-weight:bold; font-size:0.9rem; display:block; margin-bottom:5px;">${item.NOMBRE}</span>
-                            <span class="promo-details">${item.DESCRIPCION || ''}</span>
+                    <div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 8px; border: 1px solid var(--primary); background: rgba(255,193,7,0.05); border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: baseline;">
+                            <div style="flex:1;">
+                                <span class="promo-tag" ${isPopular ? 'style="background-color:gold; color:black;"' : ''}>${isPopular ? 'POPULAR' : 'PROMO'}</span>
+                                <span class="list-name" style="color: var(--primary); font-size: 1.15rem; display:block;">${item.NOMBRE}</span>
+                            </div>
+                            <span class="list-price" style="font-size: 1.3rem;">${formatPrice(p1Num)}</span>
                         </div>
-                        <div class="list-price" style="margin-left:10px; text-align:right;">${p1}</div>
+                        ${item.DESCRIPCION ? `<div style="font-size: 0.85rem; color: #ccc;">${item.DESCRIPCION}</div>` : ''}
+                        
+                        <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 5px;">
+                            <div class="stepper">
+                                <button onclick="updateMenuQty('${safeName}', ${p1Num}, '', -1)"><i class="fas fa-minus"></i></button>
+                                <span class="qty-display" data-name="${safeName}" data-variant="">0</span>
+                                <button onclick="updateMenuQty('${safeName}', ${p1Num}, '', 1)"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
                     </div>`;
                 }
+                // 3. FORMATO NORMAL (Empanadas, Fatays, Bebidas)
                 else {
-                    let style = '';
-                    let nameStyle = '';
-                    if (item.NOMBRE.toUpperCase().includes('DOCENA')) {
-                        style = 'color:var(--primary); margin-top:10px; border-top:1px dashed #444;';
+                    let style = ''; let nameStyle = '';
+                    if (isDocena) {
+                        style = 'margin-top:10px; border-top:1px dashed #444; background: rgba(255,193,7,0.05); border-radius: 8px; padding: 15px;';
                         nameStyle = 'font-weight:700; font-size:1.1rem; color:var(--primary);';
                     }
                     html = `
                     <div class="list-item" style="${style}">
-                        <span class="list-name" style="${nameStyle}">${item.NOMBRE}</span>
-                        <span class="list-price">${p1}</span>
+                        <div style="flex: 1; padding-right: 15px;">
+                            <div class="list-name" style="${nameStyle}">${item.NOMBRE}</div>
+                            ${item.DESCRIPCION ? `<div style="font-size: 0.8rem; color: #aaa; margin-top: 3px;">${item.DESCRIPCION}</div>` : ''}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span class="list-price">${formatPrice(p1Num)}</span>
+                            <div class="stepper">
+                                <button onclick="updateMenuQty('${safeName}', ${p1Num}, '', -1)"><i class="fas fa-minus"></i></button>
+                                <span class="qty-display" data-name="${safeName}" data-variant="">0</span>
+                                <button onclick="updateMenuQty('${safeName}', ${p1Num}, '', 1)"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
                     </div>`;
                 }
                 container.innerHTML += html;
             });
         }
 
-        function checkStatus() {
-            const now = new Date();
-            const day = now.getDay(); 
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const badge = document.getElementById('status-badge');
-            const currentTimeMinutes = hours * 60 + minutes;
-            const openTime = 19 * 60; 
-            const closeTime = 23 * 60; 
+        // --- SISTEMA DEL CARRITO ---
+        function updateMenuQty(name, price, variant, change) {
+            const isDocena = name.toUpperCase().includes('DOCENA');
+            const isFatay = name.toUpperCase().includes('FATAY');
 
-            if (day === 1) { 
-                badge.innerHTML = '🔴 CERRADO (Lunes)';
-                badge.style.color = '#FF5252'; badge.style.borderColor = '#FF5252';
-                return;
+            if (isDocena && !isFatay) {
+                if (change > 0) {
+                    openDocenaModal(name, price);
+                    return;
+                }
+                if (change < 0) {
+                    for (let i = cart.length - 1; i >= 0; i--) {
+                        if (cart[i].name === name && cart[i].isDocena) {
+                            cart[i].quantity -= 1;
+                            if (cart[i].quantity <= 0) cart.splice(i, 1);
+                            break; 
+                        }
+                    }
+                    updateCartUI();
+                    return;
+                }
             }
-            if (currentTimeMinutes >= openTime && currentTimeMinutes < closeTime) {
-                badge.innerHTML = '🟢 ABIERTO AHORA';
-                badge.style.color = '#4CAF50'; badge.style.borderColor = '#4CAF50';
+
+            let existing = null;
+            if (isDocena && isFatay) {
+                existing = cart.find(i => i.name === name && i.isDocena);
             } else {
-                badge.innerHTML = '🔴 CERRADO - Abre 19:00hs';
-                badge.style.color = '#FF5252'; badge.style.borderColor = '#FF5252';
+                existing = cart.find(i => i.name === name && i.variant === variant && !i.isDocena);
+            }
+            
+            if (change > 0) {
+                if (existing) existing.quantity += change;
+                else cart.push({ name, price, variant: variant, quantity: 1, isDocena: (isDocena && isFatay) });
+                
+                const btn = document.getElementById('cart-btn');
+                btn.style.transform = 'scale(1.2)';
+                setTimeout(() => btn.style.transform = 'scale(1)', 200);
+            } else if (change < 0 && existing) {
+                existing.quantity += change;
+                if (existing.quantity <= 0) {
+                    cart.splice(cart.indexOf(existing), 1);
+                }
+            }
+            updateCartUI();
+        }
+
+        function updateCartItemQty(index, change) {
+            cart[index].quantity += change;
+            if (cart[index].quantity <= 0) cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items');
+            const tipoEntrega = document.getElementById('cli-entrega').value;
+            container.innerHTML = '';
+            let subtotal = 0; let count = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="color:#aaa; text-align:center; margin-top:30px;">El carrito está vacío</p>';
+                document.getElementById('checkout-form').style.display = 'none';
+                document.getElementById('cart-btn').style.display = 'none';
+            } else {
+                document.getElementById('cart-btn').style.display = 'flex';
+                document.getElementById('checkout-form').style.display = 'flex';
+                
+                cart.forEach((item, index) => {
+                    subtotal += item.price * item.quantity;
+                    count += item.quantity;
+                    
+                    let variantLabel = '';
+                    if (item.isDocena && item.variant) {
+                        let flavors = item.variant.split('|');
+                        variantLabel = `<div style="font-size: 0.75rem; color: #aaa; margin-top: 5px; line-height: 1.4;">↳ ${flavors.join('<br>↳ ')}</div>`;
+                    } else if (!item.isDocena && item.variant) {
+                        variantLabel = `<div class="cart-item-variant">${item.variant}</div>`;
+                    }
+                    
+                    container.innerHTML += `
+                    <div class="cart-item">
+                        <div style="flex:1; padding-right: 10px;">
+                            <div class="cart-item-title">${item.name}</div>
+                            ${variantLabel}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="stepper" style="height:32px; background:#111; border-color:#333;">
+                                <button onclick="updateCartItemQty(${index}, -1)" style="color:var(--accent); width:28px;"><i class="fas fa-minus"></i></button>
+                                <span style="font-weight:bold; font-size:1rem; width:20px; text-align:center;">${item.quantity}</span>
+                                <button onclick="updateCartItemQty(${index}, 1)" style="color:var(--primary); width:28px;"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <div class="cart-item-price" style="margin:0; width:65px; text-align:right;">${formatPrice(item.price * item.quantity)}</div>
+                        </div>
+                    </div>`;
+                });
+
+                if (tipoEntrega === 'delivery' && costoDeEnvio > 0) {
+                    container.innerHTML += `
+                    <div class="cart-item" style="background: rgba(255,193,7,0.1); border-radius: 8px; padding: 10px; border: 1px solid rgba(255,193,7,0.3); margin-top: 10px;">
+                        <div style="flex:1"><div class="cart-item-title" style="color: var(--primary);">🛵 Costo de Envío</div></div>
+                        <div class="cart-item-price" style="color: var(--primary); margin-right:0;">${formatPrice(costoDeEnvio)}</div>
+                    </div>`;
+                }
+            }
+            
+            let totalFinal = tipoEntrega === 'delivery' ? subtotal + costoDeEnvio : subtotal;
+            document.getElementById('cart-count').innerText = count;
+            document.getElementById('cart-total').innerText = `Total: ${formatPrice(totalFinal)}`;
+
+            document.querySelectorAll('.qty-display').forEach(display => {
+                const name = display.getAttribute('data-name');
+                const variant = display.getAttribute('data-variant');
+                const isDocena = name.toUpperCase().includes('DOCENA');
+                const isFatay = name.toUpperCase().includes('FATAY');
+                
+                let qty = 0;
+                if (isDocena && !isFatay) {
+                    qty = cart.filter(i => i.name === name).reduce((sum, i) => sum + i.quantity, 0);
+                } else if (isDocena && isFatay) {
+                    let itemInCart = cart.find(i => i.name === name && i.isDocena);
+                    if (itemInCart) qty = itemInCart.quantity;
+                } else {
+                    let itemInCart = cart.find(i => i.name === name && i.variant === variant && !i.isDocena);
+                    if (itemInCart) qty = itemInCart.quantity;
+                }
+
+                display.innerText = qty;
+                display.style.color = qty > 0 ? 'var(--primary)' : '#fff';
+            });
+        }
+
+        // --- LÓGICA DEL SELECTOR DE DOCENAS ---
+        function openDocenaModal(name, basePrice) {
+            pendingDocena = { name, basePrice };
+            docenaSelection = {};
+            docenaTotalQty = 0;
+            docenaExtraPrice = 0;
+
+            document.getElementById('docena-title').innerText = name;
+            updateDocenaModalUI();
+
+            let container = document.getElementById('docena-flavors-container');
+            let html = '<h4 style="color:#aaa; border-bottom:1px solid #333; padding-bottom:5px; margin-top:20px;">Clásicas</h4>';
+
+            dbClasicas.forEach(emp => {
+                let sName = emp.NOMBRE.replace(/'/g, "\\'");
+                html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #222;">
+                    <div style="flex:1; font-size:1.05rem;">${emp.NOMBRE}</div>
+                    <div class="stepper" style="height:32px;">
+                        <button onclick="updateDocenaFlavor('${sName}', -1, false, 0)"><i class="fas fa-minus"></i></button>
+                        <span id="docena-qty-${sName.replace(/\s+/g, '')}" style="width:25px; text-align:center; font-weight:bold;">0</span>
+                        <button onclick="updateDocenaFlavor('${sName}', 1, false, 0)"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>`;
+            });
+
+            html += '<h4 style="color:var(--accent); border-bottom:1px solid #333; padding-bottom:5px; margin-top:30px;">Premium (Con Recargo)</h4>';
+
+            dbPremium.forEach(emp => {
+                let sName = emp.NOMBRE.replace(/'/g, "\\'");
+                let p = cleanPrice(emp.PRECIO_1);
+                let extra = p - precioBaseClasica; 
+                if(extra < 0) extra = 0; 
+
+                html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #222;">
+                    <div style="flex:1; font-size:1.05rem;">${emp.NOMBRE} <span style="color:var(--accent); font-size:0.85rem; font-weight:bold; display:block;">(+${formatPrice(extra)})</span></div>
+                    <div class="stepper" style="height:32px;">
+                        <button onclick="updateDocenaFlavor('${sName}', -1, true, ${extra})"><i class="fas fa-minus"></i></button>
+                        <span id="docena-qty-${sName.replace(/\s+/g, '')}" style="width:25px; text-align:center; font-weight:bold;">0</span>
+                        <button onclick="updateDocenaFlavor('${sName}', 1, true, ${extra})"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('docena-modal').style.display = 'flex';
+        }
+
+        function updateDocenaFlavor(name, change, isPremium, extraCost) {
+            let current = docenaSelection[name] || 0;
+            
+            if (change > 0 && docenaTotalQty >= 12) return; 
+            if (change < 0 && current <= 0) return; 
+
+            docenaSelection[name] = current + change;
+            docenaTotalQty += change;
+            
+            if (isPremium) {
+                docenaExtraPrice += (change * extraCost);
+            }
+
+            document.getElementById(`docena-qty-${name.replace(/\s+/g, '')}`).innerText = docenaSelection[name];
+            updateDocenaModalUI();
+        }
+
+        function updateDocenaModalUI() {
+            document.getElementById('docena-count').innerText = docenaTotalQty;
+            let currentTotal = pendingDocena.basePrice + docenaExtraPrice;
+            document.getElementById('docena-total-price').innerText = formatPrice(currentTotal);
+
+            const btn = document.getElementById('btn-confirm-docena');
+            if (docenaTotalQty === 12) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.background = '#25D366';
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.background = 'var(--primary)';
+            }
+        }
+
+        function closeDocenaModal() {
+            document.getElementById('docena-modal').style.display = 'none';
+            pendingDocena = null;
+        }
+
+        function confirmDocena() {
+            if (docenaTotalQty !== 12) return;
+            
+            let flavorsArr = [];
+            for (let [flavor, qty] of Object.entries(docenaSelection)) {
+                if (qty > 0) flavorsArr.push(`${qty}x ${flavor}`);
+            }
+            let variantString = flavorsArr.join('|'); 
+            let finalPrice = pendingDocena.basePrice + docenaExtraPrice;
+
+            cart.push({ 
+                name: pendingDocena.name, 
+                price: finalPrice, 
+                variant: variantString, 
+                quantity: 1, 
+                isDocena: true 
+            });
+            
+            updateCartUI();
+            
+            const btn = document.getElementById('cart-btn');
+            btn.style.transform = 'scale(1.2)';
+            setTimeout(() => btn.style.transform = 'scale(1)', 200);
+
+            closeDocenaModal();
+        }
+
+        // --- FUNCIONES FORMULARIO ---
+        function toggleCart() {
+            const modal = document.getElementById('cart-modal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+        function toggleDeliveryFields() {
+            const entrega = document.getElementById('cli-entrega').value;
+            document.getElementById('delivery-fields').style.display = entrega === 'delivery' ? 'flex' : 'none';
+        }
+        function toggleHorarioFields() {
+            const horario = document.getElementById('cli-horario').value;
+            document.getElementById('horario-exacto-container').style.display = horario === 'Programado' ? 'flex' : 'none';
+        }
+        function togglePagoFields() {
+            const pago = document.getElementById('cli-pago').value;
+            document.getElementById('info-transferencia').style.display = pago === 'Transferencia' ? 'block' : 'none';
+            document.getElementById('efectivo-fields').style.display = pago === 'Efectivo' ? 'flex' : 'none';
+        }
+
+        // --- ENVIAR A WHATSAPP ---
+        function enviarPedido() {
+            const nombre = document.getElementById('cli-nombre').value.trim();
+            const telefono = document.getElementById('cli-telefono').value.trim();
+            const entrega = document.getElementById('cli-entrega').value;
+            const direccion = document.getElementById('cli-direccion').value.trim();
+            const entreCalles = document.getElementById('cli-entrecalles').value.trim();
+            const depto = document.getElementById('cli-depto').value.trim();
+            const tipoHorario = document.getElementById('cli-horario').value;
+            const horaExacta = document.getElementById('cli-horario-exacto').value;
+            const pago = document.getElementById('cli-pago').value;
+            const abona = document.getElementById('cli-abona').value.trim();
+            const notas = document.getElementById('cli-notas').value.trim();
+
+            if(!nombre) return alert("Por favor, ingresá tu nombre.");
+            if(!telefono) return alert("Por favor, ingresá tu teléfono de contacto.");
+            
+            if(entrega === 'delivery') {
+                if(!direccion) return alert("Por favor, ingresá tu dirección.");
+                if(!entreCalles) return alert("Por favor, indicanos entre qué calles te encontrás.");
+            }
+            if(tipoHorario === 'Programado' && !horaExacta) return alert("Por favor, indicanos a qué hora querés tu pedido.");
+            
+            if(pago === 'Efectivo' && !abona) return alert("Por favor, indicanos con cuánto vas a abonar para enviarte el cambio correcto.");
+
+            let texto = `🚨 *NUEVO PEDIDO* 🚨\n\n`;
+            texto += `👤 *Cliente:* ${nombre}\n`;
+            texto += `📞 *Teléfono:* ${telefono}\n`;
+            
+            if(entrega === 'delivery') {
+                texto += `🛵 *Envío:* Delivery\n📍 *Dirección:* ${direccion}\n🛣️ *Entre calles:* ${entreCalles}\n`;
+                if(depto) texto += `🏢 *Depto/Piso:* ${depto}\n`;
+            } else { texto += `🏪 *Retira por el local*\n`; }
+            
+            texto += `⏱️ *Horario:* ${tipoHorario === 'Lo antes posible' ? 'Lo antes posible' : `${horaExacta} hs`}\n`;
+            
+            if(pago === 'Efectivo') {
+                texto += `💵 *Pago:* Efectivo (Abona con $${abona})\n`;
+            } else {
+                texto += `💵 *Pago:* Transferencia\n`;
+            }
+
+            if(notas) texto += `📌 *Aclaraciones:* ${notas}\n`;
+            
+            texto += `\n📝 *DETALLE DEL PEDIDO:*\n`;
+
+            let subtotal = 0;
+            cart.forEach(item => {
+                // Filtramos emojis
+                let cleanName = item.name.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim();
+                let cleanVariant = item.variant ? item.variant.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim() : '';
+                
+                let varianteFormat = '';
+                
+                if (item.isDocena && cleanVariant) {
+                    let flavorsArray = cleanVariant.split('|');
+                    varianteFormat = '\n   ↳ _' + flavorsArray.join('_\n   ↳ _') + '_';
+                } else if (!item.isDocena && cleanVariant) {
+                    varianteFormat = ` (${cleanVariant})`;
+                }
+                
+                let totalItem = item.price * item.quantity;
+                subtotal += totalItem;
+                
+                if (item.isDocena) {
+                    texto += `▪️ ${item.quantity}x ${cleanName} - ${formatPrice(totalItem)}${varianteFormat}\n`;
+                } else {
+                    texto += `▪️ ${item.quantity}x ${cleanName}${varianteFormat} - ${formatPrice(totalItem)}\n`;
+                }
+            });
+
+            if (entrega === 'delivery' && costoDeEnvio > 0) texto += `▪️ Costo de Envío - ${formatPrice(costoDeEnvio)}\n`;
+
+            let totalFinal = entrega === 'delivery' ? subtotal + costoDeEnvio : subtotal;
+            texto += `\n💰 *TOTAL A ABONAR: ${formatPrice(totalFinal)}*\n\n`;
+            
+            if(pago === 'Transferencia') texto += `⚠️ _Te adjunto el comprobante de transferencia al alias: ${aliasTransferencia}_\n`;
+
+            const url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
+        }
+
+        // --- ESTADO LOCAL ---
+        function checkStatus() {
+            const now = new Date(); const day = now.getDay(); const hours = now.getHours(); const mins = now.getMinutes();
+            const badge = document.getElementById('status-badge');
+            const currentMins = hours * 60 + mins;
+            
+            if (day === 1) { 
+                badge.innerHTML = '🔴 CERRADO (Lunes)'; badge.style.color = '#FF5252'; badge.style.borderColor = '#FF5252'; return; 
+            }
+            if (currentMins >= 1140 && currentMins < 1380) { 
+                badge.innerHTML = '🟢 ABIERTO AHORA'; badge.style.color = '#4CAF50'; badge.style.borderColor = '#4CAF50';
+            } else {
+                badge.innerHTML = '🔴 CERRADO - Abre 19:00hs'; badge.style.color = '#FF5252'; badge.style.borderColor = '#FF5252';
             }
         }
         checkStatus(); setInterval(checkStatus, 60000);
-
-        const mybutton = document.getElementById("scrollTopBtn");
-        window.onscroll = function() {
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                mybutton.style.display = "block";
-            } else {
-                mybutton.style.display = "none";
-            }
-        }
-
-        function topFunction() {
-            document.body.scrollTop = 0;
-            document.documentElement.scrollTop = 0;
-        }
     </script>
 </body>
 </html>
