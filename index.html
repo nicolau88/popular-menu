@@ -244,7 +244,7 @@
                 </div>
 
                 <button class="btn-submit" onclick="enviarPedido()">
-                    <i class="fab fa-whatsapp"></i> Enviar Pedido por WhatsApp
+                    <i class="fab fa-whatsapp"></i> Enviar Pedido
                 </button>
             </div>
         </div>
@@ -275,6 +275,11 @@
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
         const numeroWhatsApp = "542215713693"; 
         
+        // -----------------------------------------------------------------------------------
+        // 🔥 URL DEL GOOGLE APPS SCRIPT PARA GUARDAR LAS VENTAS EN EL EXCEL 🔥
+        const urlRegistroVentas = 'https://script.google.com/macros/s/AKfycbwHNEo_QRRQTm0fZBr_q-DkiKhJhzbMMDqj5xNgvbVv8WghP_i1I14BjGU4YFQ06hFX/exec';
+        // -----------------------------------------------------------------------------------
+
         let cart = [];
         let costoDeEnvio = 0; 
         let aliasTransferencia = "Consultar por WhatsApp";
@@ -718,7 +723,7 @@
             document.getElementById('efectivo-fields').style.display = pago === 'Efectivo' ? 'flex' : 'none';
         }
 
-        // --- ENVIAR A WHATSAPP ---
+        // --- ENVIAR A WHATSAPP Y A GOOGLE SHEETS ---
         function enviarPedido() {
             const nombre = document.getElementById('cli-nombre').value.trim();
             const telefono = document.getElementById('cli-telefono').value.trim();
@@ -743,6 +748,11 @@
             
             if(pago === 'Efectivo' && !abona) return alert("Por favor, indicanos con cuánto vas a abonar para enviarte el cambio correcto.");
 
+            // ARMADO DE DATOS PARA EXCEL
+            const fechaActual = new Date().toLocaleDateString('es-AR');
+            const horaActual = new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
+            let direccionFinal = entrega === 'delivery' ? `${direccion} (e/ ${entreCalles}) ${depto ? 'Depto: '+depto : ''}` : 'Retira por el local';
+            
             let texto = `🚨 *NUEVO PEDIDO* 🚨\n\n`;
             texto += `👤 *Cliente:* ${nombre}\n`;
             texto += `📞 *Teléfono:* ${telefono}\n`;
@@ -765,8 +775,9 @@
             texto += `\n📝 *DETALLE DEL PEDIDO:*\n`;
 
             let subtotal = 0;
+            let detalleParaExcel = [];
+
             cart.forEach(item => {
-                // Filtramos emojis
                 let cleanName = item.name.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim();
                 let cleanVariant = item.variant ? item.variant.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim() : '';
                 
@@ -784,8 +795,10 @@
                 
                 if (item.isDocena) {
                     texto += `▪️ ${item.quantity}x ${cleanName} - ${formatPrice(totalItem)}${varianteFormat}\n`;
+                    detalleParaExcel.push(`${item.quantity}x ${cleanName} [${cleanVariant.replace(/\|/g, ', ')}]`);
                 } else {
                     texto += `▪️ ${item.quantity}x ${cleanName}${varianteFormat} - ${formatPrice(totalItem)}\n`;
+                    detalleParaExcel.push(`${item.quantity}x ${cleanName}${cleanVariant ? ' ('+cleanVariant+')' : ''}`);
                 }
             });
 
@@ -796,8 +809,32 @@
             
             if(pago === 'Transferencia') texto += `⚠️ _Te adjunto el comprobante de transferencia al alias: ${aliasTransferencia}_\n`;
 
-            const url = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(texto)}`;
-            window.open(url, '_blank');
+            // ENVÍO DE DATOS AL GOOGLE SHEETS
+            if (urlRegistroVentas !== 'PEGAR_AQUI_LA_URL_DEL_SCRIPT') {
+                let payload = {
+                    fecha: fechaActual,
+                    hora: horaActual,
+                    cliente: nombre,
+                    telefono: telefono,
+                    tipoEntrega: entrega === 'delivery' ? 'Delivery' : 'Retiro',
+                    direccion: direccionFinal,
+                    pago: pago,
+                    total: totalFinal,
+                    envio: entrega === 'delivery' ? costoDeEnvio : 0,
+                    detalleResumen: detalleParaExcel.join(' + '),
+                    carrito: cart 
+                };
+
+                fetch(urlRegistroVentas, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(error => console.log("Envio omitido"));
+            }
+
+            const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(texto)}`;
+            window.open(urlWhatsApp, '_blank');
         }
 
         // --- ESTADO LOCAL ---
