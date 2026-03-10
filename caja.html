@@ -27,10 +27,11 @@
         .btn-filtro:hover, .btn-filtro.active { background: var(--primary); color: #000; }
 
         .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; }
-        .btn-producto { background: var(--bg-panel); border: 1px solid #444; border-radius: 8px; padding: 15px 10px; color: white; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; height: 105px; transition: 0.2s; }
+        .btn-producto { background: var(--bg-panel); border: 1px solid #444; border-radius: 8px; padding: 15px 10px; color: white; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; min-height: 105px; transition: 0.2s; }
         .btn-producto:hover { background: #333; border-color: var(--primary); }
-        .btn-producto .nombre { font-weight: bold; font-size: 0.85rem; line-height: 1.2; }
-        .btn-producto .precio { color: var(--primary); font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
+        .btn-producto .nombre { font-weight: bold; font-size: 0.85rem; line-height: 1.2; margin-bottom: 4px; }
+        .btn-producto .desc-promo { font-size: 0.65rem; color: #aaa; margin-top: 4px; line-height: 1.1; font-style: italic; }
+        .btn-producto .precio { color: var(--primary); font-family: 'Oswald', sans-serif; font-size: 1.1rem; margin-top: auto; }
         .btn-producto .variante { font-size: 0.7rem; color: #aaa; background: #333; padding: 2px 5px; border-radius: 3px; margin-bottom: 3px; }
 
         .panel-ticket { flex: 1; min-width: 350px; max-width: 420px; background: var(--bg-panel); display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; border-left: 2px solid #000; }
@@ -64,7 +65,8 @@
             body { background: white; color: black; }
             #ticket-impresion { display: block !important; width: 72mm; margin: 0 auto; font-family: 'Courier New', monospace; font-size: 12px; }
             .t-center { text-align: center; } .t-bold { font-weight: bold; } .t-line { border-top: 1px dashed black; margin: 4px 0; }
-            .t-item { display: flex; justify-content: space-between; margin-bottom: 5px; align-items: flex-start; }
+            .t-item { display: flex; justify-content: space-between; margin-bottom: 5px; align-items: flex-start; border-bottom: 1px dotted #ccc; padding-bottom: 3px; }
+            .t-desc { font-size: 10px; font-style: italic; margin-left: 10px; display: block; }
         }
     </style>
 </head>
@@ -79,7 +81,7 @@
     <div id="app-caja" style="display:none;">
         <div class="panel-menu">
             <div class="header-caja">
-                <h1>SISTEMA DE VENTAS</h1>
+                <h1>Caja - Pizzeria Popular (6 y 66)</h1>
                 <div id="loading"><i class="fas fa-spinner fa-spin"></i></div>
             </div>
             
@@ -106,7 +108,7 @@
                 <div class="total-display" id="total-display">$0</div>
                 <div class="opciones-pago" style="display:flex; gap:10px; margin-bottom:10px;">
                     <button class="btn-pago active" id="btn-efectivo" onclick="setMetodoPago('Efectivo')">Efectivo</button>
-                    <button class="btn-pago" id="btn-transferencia" onclick="setMetodoPago('Transferencia')">Transf/MP</button>
+                    <button class="btn-pago" id="btn-transferencia" onclick="setMetodoPago('Transferencia')">Transferencia</button>
                 </div>
                 <div id="box-vuelto">
                     <input type="number" id="paga-con" class="input-caja" placeholder="Paga con: $" oninput="calcularVuelto()">
@@ -138,7 +140,7 @@
     <div id="ticket-impresion"></div>
 
     <script>
-        const CONST_PASSWORD = "1650"; // LA CLAVE QUE ME PEDISTE
+        const CONST_PASSWORD = "1650";
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
         const urlRegistroVentas = 'https://script.google.com/macros/s/AKfycbwHNEo_QRRQTm0fZBr_q-DkiKhJhzbMMDqj5xNgvbVv8WghP_i1I14BjGU4YFQ06hFX/exec';
 
@@ -167,11 +169,11 @@
         function formatPrice(n) { return '$' + n.toLocaleString('es-AR'); }
         function cleanPrice(s) { return parseInt(s.toString().replace(/[^0-9]/g, '')) || 0; }
         function normalize(s) { return s ? s.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ') : ''; }
+        function cleanEmojis(str) { return str.replace(/[🔥❄️⭐🥟🌓🍕🥤🥤🥤🥤★🌿]/g, '').trim(); }
 
         function procesar(data) {
             data.forEach(item => {
                 if (!item.SECCION || !item.NOMBRE || normalize(item.SECCION) === 'CONFIGURACION') return;
-                // Filtro para quitar docenas especiales de la lista
                 if (item.NOMBRE.toUpperCase().includes('DOCENA') && item.NOMBRE.toUpperCase().includes('ESPECIAL')) return;
 
                 let p1 = cleanPrice(item.PRECIO_1), p2 = cleanPrice(item.PRECIO_2), seccion = normalize(item.SECCION);
@@ -181,25 +183,33 @@
                 if (seccion.includes('CLASICAS') && !isDocena) { dbClasicas.push(item); if (precioBaseClasica === 0) precioBaseClasica = p1; }
                 if (seccion.includes('PREMIUM') && !isDocena) dbPremium.push(item);
 
+                let prodObj = { 
+                    nombre: item.NOMBRE, 
+                    descripcion: item.DESCRIPCION || "",
+                    variante: "", 
+                    precio: p1, 
+                    categoria: "", 
+                    isDocena: isDocena 
+                };
+
                 if (seccion.includes('MEDIA')) {
-                    if(p2 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Horneada', precio: p2, categoria: 'MEDIAS_HORNEADAS', isDocena: false });
-                    if(p1 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Para Hornear', precio: p1, categoria: 'MEDIAS_HORNEAR', isDocena: false });
+                    if(p2 > 0) catalogo.push({ ...prodObj, variante: 'Horneada', precio: p2, categoria: 'MEDIAS_HORNEADAS', isDocena: false });
+                    if(p1 > 0) catalogo.push({ ...prodObj, variante: 'Para Hornear', precio: p1, categoria: 'MEDIAS_HORNEAR', isDocena: false });
                 } else if(seccion.includes('PIZZA')) {
-                    if(p2 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Horneada', precio: p2, categoria: 'PIZZAS_HORNEADAS', isDocena: false });
-                    if(p1 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Para Hornear', precio: p1, categoria: 'PIZZAS_HORNEAR', isDocena: false });
+                    if(p2 > 0) catalogo.push({ ...prodObj, variante: 'Horneada', precio: p2, categoria: 'PIZZAS_HORNEADAS', isDocena: false });
+                    if(p1 > 0) catalogo.push({ ...prodObj, variante: 'Para Hornear', precio: p1, categoria: 'PIZZAS_HORNEAR', isDocena: false });
                 } else if(isFatay) {
-                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'FATAYS', isDocena: isDocena });
+                    catalogo.push({ ...prodObj, categoria: 'FATAYS' });
                 } else if(seccion.includes('EMPANADA')) {
-                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'EMPANADAS', isDocena: isDocena });
+                    catalogo.push({ ...prodObj, categoria: 'EMPANADAS' });
                 } else if(seccion.includes('PROMO')) {
-                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'PROMOS', isDocena: isDocena });
-                } else if(seccion.includes('BEBIDA') || seccion.includes('CERVEZA')) {
-                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'BEBIDAS', isDocena: false });
+                    catalogo.push({ ...prodObj, categoria: 'PROMOS' });
+                } else if(seccion.includes('BEBIDA')) {
+                    catalogo.push({ ...prodObj, categoria: 'BEBIDAS' });
                 } else if(seccion.includes('EXTRA')) {
-                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'EXTRAS', isDocena: false });
+                    catalogo.push({ ...prodObj, categoria: 'EXTRAS' });
                 }
             });
-            // Ordenar para que Docena aparezca al final
             catalogo.sort((a, b) => (a.isDocena && !b.isDocena) ? 1 : (!a.isDocena && b.isDocena) ? -1 : 0);
             filtrar('PIZZAS_HORNEADAS', 'btn-f-horneadas');
         }
@@ -210,10 +220,18 @@
             const grid = document.getElementById('grid-productos'); grid.innerHTML = '';
             catalogo.filter(i => i.categoria === cat).forEach(item => {
                 let btn = document.createElement('button'); btn.className = 'btn-producto';
-                btn.onclick = () => { if (item.isDocena && item.categoria !== 'FATAYS') abrirModalDocena(item); else add(item.nombre, item.variante, item.precio, item.isDocena, item.categoria); };
-                btn.innerHTML = `<div class="nombre">${item.nombre}</div>${item.variante ? `<div class="variante">${item.variante}</div>` : ''}<div class="precio">${formatPrice(item.precio)}</div>`;
+                btn.onclick = () => { if (item.isDocena && item.categoria !== 'FATAYS') abrirModalDocena(item); else add(item.nombre, item.variante, item.precio, item.isDocena, item.categoria, item.descripcion); };
+                
+                let descHtml = (cat === 'PROMOS' && item.descripcion) ? `<div class="desc-promo">${item.descripcion}</div>` : "";
+                btn.innerHTML = `<div class="nombre">${item.nombre}</div>${item.variante ? `<div class="variante">${item.variante}</div>` : ''}${descHtml}<div class="precio">${formatPrice(item.precio)}</div>`;
                 grid.appendChild(btn);
             });
+        }
+
+        function add(n, v, p, d, c, desc = "") {
+            let ex = carrito.find(i => i.nombre === n && i.variante === v);
+            if (ex && !d) ex.cantidad++; else carrito.push({ nombre: n, variante: v, precio: p, cantidad: 1, isDocena: d, categoria: c, descripcion: desc });
+            autoEmp(); update();
         }
 
         function autoEmp() {
@@ -234,15 +252,9 @@
                 }
                 carrito = carrito.filter(i => i.cantidad > 0);
                 let v = Object.entries(sab).map(([n, c]) => `${c}x ${n}`).join(' | ');
-                add(promoDocenaItem.nombre, v, promoDocenaItem.precio + extra, true, 'PROMOS');
+                add(promoDocenaItem.nombre, v, promoDocenaItem.precio + extra, true, 'PROMOS', "");
                 totalSueltas -= 12;
             }
-        }
-
-        function add(n, v, p, d, c) {
-            let ex = carrito.find(i => i.nombre === n && i.variante === v);
-            if (ex && !d) ex.cantidad++; else carrito.push({ nombre: n, variante: v, precio: p, cantidad: 1, isDocena: d, categoria: c });
-            autoEmp(); update();
         }
 
         function update() {
@@ -259,7 +271,7 @@
         }
 
         function cant(i, d) { carrito[i].cantidad += d; if (carrito[i].cantidad <= 0) carrito.splice(i, 1); autoEmp(); update(); }
-        function setMetodoPago(m) { metodoPago = m; document.getElementById('btn-efectivo').classList.toggle('active', m === 'Efectivo'); document.getElementById('btn-transferencia').classList.toggle('active', m !== 'Efectivo'); document.getElementById('box-vuelto').style.opacity = m === 'Efectivo' ? '1' : '0.2'; }
+        function setMetodoPago(m) { metodoPago = m; document.getElementById('btn-efectivo').classList.toggle('active', m === 'Efectivo'); document.getElementById('btn-transferencia').classList.toggle('active', m === 'Transferencia'); document.getElementById('box-vuelto').style.opacity = m === 'Efectivo' ? '1' : '0.2'; }
         function calcularVuelto() { let paga = parseFloat(document.getElementById('paga-con').value) || 0; let v = paga - subtotal; document.getElementById('display-vuelto').innerText = (paga > 0 && v >= 0) ? formatPrice(v) : "$0"; }
 
         function abrirModalDocena(item) {
@@ -293,26 +305,37 @@
         function cerrarModalDocena() { document.getElementById('modal-docena').style.display = 'none'; }
         function confirmarDocena() {
             let s = Object.entries(docenaSeleccion).filter(([n, c]) => c > 0).map(([n, c]) => `${c}x ${n}`).join(' | ');
-            add(docenaActual.nombre, s, docenaActual.precio + docenaPrecioExtra, true, 'PROMOS'); cerrarModalDocena();
+            add(docenaActual.nombre, s, docenaActual.precio + docenaPrecioExtra, true, 'PROMOS', ""); cerrarModalDocena();
         }
 
         function cobrar() {
             let cli = document.getElementById('input-cliente').value || "Mostrador", fec = new Date().toLocaleDateString('es-AR'), hor = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
-            let t = `<div class="t-center t-bold" style="font-size:16px;">PIZZERÍA POPULAR</div><div class="t-center">Mostrador - #${Math.floor(100+Math.random()*900)}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${cli}</div><div class="t-line"></div>`;
+            let numTurno = Math.floor(100+Math.random()*900);
+            let t = `<div class="t-center t-bold" style="font-size:16px;">PIZZERIA POPULAR</div><div class="t-center">Turno: #${numTurno}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${cli}</div><div class="t-line"></div>`;
             let detExcel = [], scriptCart = [];
+            
             carrito.forEach(it => {
                 let v = '';
+                let cleanName = cleanEmojis(it.nombre);
+                let cleanVar = cleanEmojis(it.variante);
+                
                 if (it.isDocena && it.variante) {
-                    v = it.variante.split(' | ').map(s => `<div style="margin-left:10px;">• ${s}</div>`).join('');
+                    v = cleanVar.split('|').map(s => `<div style="margin-left:10px;">- ${s.trim()}</div>`).join('');
                 } else if (it.variante) {
-                    v = `<div style="margin-left:10px;">• ${it.variante}</div>`;
+                    v = `<div style="margin-left:10px;">- ${cleanVar}</div>`;
                 }
-                t += `<div class="t-item"><div><b>${it.cantidad}x ${it.nombre}</b>${v}</div><div>${formatPrice(it.precio*it.cantidad)}</div></div>`;
-                detExcel.push(`${it.cantidad}x ${it.nombre} [${it.variante}]`);
-                scriptCart.push({ name: it.nombre, variant: it.variante, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena });
+                
+                // Si es promo, agregar la descripción del Excel en el ticket
+                let descHtml = (it.categoria === 'PROMOS' && it.descripcion) ? `<div class="t-desc">Incluye: ${it.descripcion}</div>` : "";
+
+                t += `<div class="t-item"><div><b>${it.cantidad}x ${cleanName}</b>${v}${descHtml}</div><div>${formatPrice(it.precio*it.cantidad)}</div></div>`;
+                detExcel.push(`${it.cantidad}x ${cleanName} [${cleanVar}]`);
+                scriptCart.push({ name: cleanName, variant: cleanVar, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena });
             });
-            t += `<div class="t-line"></div><div class="t-total">TOTAL: ${formatPrice(subtotal)}</div><div>Pago: ${metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px;">¡Gracias por tu compra!</div>`;
+            
+            t += `<div class="t-line"></div><div class="t-total">TOTAL: ${formatPrice(subtotal)}</div><div>Pago: ${metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px;">PARA COCINA - #${numTurno}</div>`;
             document.getElementById('ticket-impresion').innerHTML = t;
+            
             fetch(urlRegistroVentas, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: subtotal, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) })
             .then(() => { window.print(); carrito = []; document.getElementById('paga-con').value = ''; document.getElementById('input-cliente').value = ''; update(); });
         }
