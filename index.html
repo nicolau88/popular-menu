@@ -119,6 +119,7 @@
         <a href="#fatays" class="nav-pill">⭐ Fatays</a>
         <a href="#pizzas" class="nav-pill">🍕 Pizzas</a>
         <a href="#promos" class="nav-pill">🔥 Promos</a>
+        <a href="#medias-pizzas" class="nav-pill">🌓 1/2 Pizzas</a>
         <a href="#bebidas" class="nav-pill">🥤 Bebidas</a>
     </div>
 
@@ -140,6 +141,9 @@
         
         <h2 id="promos" class="section-title"><i class="fas fa-tags"></i> Promociones</h2>
         <div id="promos-list" class="list-group"></div>
+
+        <h2 id="medias-pizzas" class="section-title"><i class="fas fa-adjust"></i> Medias Pizzas</h2>
+        <div id="medias-pizzas-list"></div>
 
         <h2 id="bebidas" class="section-title"><i class="fas fa-glass-cheers"></i> Bebidas</h2>
         <div class="subsection-title">SIN ALCOHOL</div>
@@ -266,7 +270,7 @@
                 </div>
             
             <div style="padding: 15px 20px; background: #1a1a1a; border-top: 1px solid #333;">
-                <button id="btn-confirm-docena" class="btn-submit" onclick="confirmDocena()" style="width: 100%; margin: 0;" disabled>AGREGAR AL CARRITO</button>
+                <button id="btn-confirmar-docena" class="btn-submit" onclick="confirmDocena()" style="width: 100%; margin: 0;" disabled>AGREGAR AL CARRITO</button>
             </div>
         </div>
     </div>
@@ -274,11 +278,7 @@
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
         const numeroWhatsApp = "542215713693"; 
-        
-        // -----------------------------------------------------------------------------------
-        // 🔥 URL DEL GOOGLE APPS SCRIPT PARA GUARDAR LAS VENTAS EN EL EXCEL 🔥
         const urlRegistroVentas = 'https://script.google.com/macros/s/AKfycbwHNEo_QRRQTm0fZBr_q-DkiKhJhzbMMDqj5xNgvbVv8WghP_i1I14BjGU4YFQ06hFX/exec';
-        // -----------------------------------------------------------------------------------
 
         let cart = [];
         let costoDeEnvio = 0; 
@@ -325,6 +325,7 @@
             const containerMap = {
                 'promos-list': ['PROMOS', 'PROMOCIONES', 'PROMO', 'SECCION PROMOCIONES'],
                 'pizzas-list': ['PIZZAS', 'PIZZA', 'NUESTRAS PIZZAS', 'SECCION PIZZAS'],
+                'medias-pizzas-list': ['MEDIAS PIZZAS', 'MEDIA PIZZA'],
                 'empanadas-clasicas-list': ['EMPANADAS CLASICAS', 'EMPANADAS', 'CLASICAS', 'EMPANADAS_CLASICAS'],
                 'empanadas-premium-list': ['EMPANADAS PREMIUM', 'PREMIUM', 'EMPANADAS ESPECIALES', 'EMPANADAS_PREMIUM'],
                 'fatays-list': ['FATAYS', 'FATAY', 'FATAY (CARNE)'],
@@ -368,7 +369,8 @@
                 const safeName = item.NOMBRE.replace(/'/g, "\\'");
                 const isPopular = item.NOMBRE.toUpperCase().includes('POPULAR');
 
-                if (targetId === 'pizzas-list') {
+                // Lógica compartida para Pizzas y Medias Pizzas
+                if (targetId === 'pizzas-list' || targetId === 'medias-pizzas-list') {
                     html = `
                     <div style="background: #1a1a1a; border-radius: 12px; margin-bottom: 16px; border: 1px solid ${isPopular ? 'gold' : '#333'}; box-shadow: 0 4px 6px rgba(0,0,0,0.2); overflow: hidden;">
                         <div style="padding: 15px; background: ${isPopular ? 'rgba(255,215,0,0.05)' : 'transparent'};">
@@ -451,7 +453,6 @@
             });
         }
 
-        // --- SISTEMA DEL CARRITO ---
         function updateMenuQty(name, price, variant, change) {
             const isDocena = name.toUpperCase().includes('DOCENA');
             const isFatay = name.toUpperCase().includes('FATAY');
@@ -569,7 +570,6 @@
             });
         }
 
-        // --- LÓGICA DEL SELECTOR DE DOCENAS ---
         function openDocenaModal(name, basePrice) {
             pendingDocena = { name, basePrice };
             docenaSelection = {};
@@ -634,7 +634,7 @@
             let currentTotal = pendingDocena.basePrice + docenaExtraPrice;
             document.getElementById('docena-total-price').innerText = formatPrice(currentTotal);
 
-            const btn = document.getElementById('btn-confirm-docena');
+            const btn = document.getElementById('btn-confirmar-docena');
             if (docenaTotalQty === 12) {
                 btn.disabled = false; btn.style.opacity = '1'; btn.style.background = '#25D366';
             } else {
@@ -702,7 +702,6 @@
             if(tipoHorario === 'Programado' && !horaExacta) return alert("Por favor, indicanos a qué hora querés tu pedido.");
             if(pago === 'Efectivo' && !abona) return alert("Por favor, indicanos con cuánto vas a abonar para enviarte el cambio correcto.");
 
-            // ARMADO DE DATOS PARA EXCEL
             const fechaActual = new Date().toLocaleDateString('es-AR');
             const horaActual = new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
             let direccionFinal = entrega === 'delivery' ? `${direccion} (e/ ${entreCalles}) ${depto ? 'Depto: '+depto : ''}` : 'Retira por el local';
@@ -734,7 +733,6 @@
             cart.forEach(item => {
                 let cleanName = item.name.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim();
                 let cleanVariant = item.variant ? item.variant.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim() : '';
-                
                 let varianteFormat = '';
                 
                 if (item.isDocena && cleanVariant) {
@@ -762,7 +760,6 @@
             texto += `\n💰 *TOTAL A ABONAR: ${formatPrice(totalFinal)}*\n\n`;
             if(pago === 'Transferencia') texto += `⚠️ _Te adjunto el comprobante de transferencia al alias: ${aliasTransferencia}_\n`;
 
-            // ENVÍO DE DATOS AL GOOGLE SHEETS (CON EL AJUSTE 'text/plain')
             if (urlRegistroVentas !== 'PEGAR_AQUI_LA_URL_DEL_SCRIPT') {
                 let payload = {
                     fecha: fechaActual,
@@ -783,14 +780,13 @@
                     mode: 'no-cors', 
                     headers: { 'Content-Type': 'text/plain' }, 
                     body: JSON.stringify(payload)
-                }).catch(error => console.log("Envio omitido o con error de conexion", error));
+                }).catch(error => console.log("Error de conexión", error));
             }
 
             const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(texto)}`;
             window.open(urlWhatsApp, '_blank');
         }
 
-        // --- ESTADO LOCAL ---
         function checkStatus() {
             const now = new Date(); const day = now.getDay(); const hours = now.getHours(); const mins = now.getMinutes();
             const badge = document.getElementById('status-badge');
