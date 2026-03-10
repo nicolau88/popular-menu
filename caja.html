@@ -304,13 +304,15 @@
 
         function cerrarModalDocena() { document.getElementById('modal-docena').style.display = 'none'; }
         function confirmarDocena() {
-            let s = Object.entries(docenaSeleccion).filter(([n, c]) => c > 0).map(([n, c]) => `${c}x ${n}`).join(' | ');
+            let s = Object.entries(docenaSelection).filter(([n, c]) => c > 0).map(([n, c]) => `${c}x ${n}`).join(' | ');
             add(docenaActual.nombre, s, docenaActual.precio + docenaPrecioExtra, true, 'PROMOS', ""); cerrarModalDocena();
         }
 
         function cobrar() {
             let cli = document.getElementById('input-cliente').value || "Mostrador", fec = new Date().toLocaleDateString('es-AR'), hor = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
             let numTurno = Math.floor(100+Math.random()*900);
+            
+            // 1. ARMAR EL TICKET
             let t = `<div class="t-center t-bold" style="font-size:16px;">PIZZERIA POPULAR</div><div class="t-center">Turno: #${numTurno}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${cli}</div><div class="t-line"></div>`;
             let detExcel = [], scriptCart = [];
             
@@ -318,16 +320,9 @@
                 let v = '';
                 let cleanName = cleanEmojis(it.nombre);
                 let cleanVar = cleanEmojis(it.variante);
-                
-                if (it.isDocena && it.variante) {
-                    v = cleanVar.split('|').map(s => `<div style="margin-left:10px;">- ${s.trim()}</div>`).join('');
-                } else if (it.variante) {
-                    v = `<div style="margin-left:10px;">- ${cleanVar}</div>`;
-                }
-                
-                // Si es promo, agregar la descripción del Excel en el ticket
+                if (it.isDocena && it.variante) { v = cleanVar.split('|').map(s => `<div style="margin-left:10px;">- ${s.trim()}</div>`).join(''); } 
+                else if (it.variante) { v = `<div style="margin-left:10px;">- ${cleanVar}</div>`; }
                 let descHtml = (it.categoria === 'PROMOS' && it.descripcion) ? `<div class="t-desc">Incluye: ${it.descripcion}</div>` : "";
-
                 t += `<div class="t-item"><div><b>${it.cantidad}x ${cleanName}</b>${v}${descHtml}</div><div>${formatPrice(it.precio*it.cantidad)}</div></div>`;
                 detExcel.push(`${it.cantidad}x ${cleanName} [${cleanVar}]`);
                 scriptCart.push({ name: cleanName, variant: cleanVar, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena });
@@ -336,8 +331,19 @@
             t += `<div class="t-line"></div><div class="t-total">TOTAL: ${formatPrice(subtotal)}</div><div>Pago: ${metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px;">PARA COCINA - #${numTurno}</div>`;
             document.getElementById('ticket-impresion').innerHTML = t;
             
-            fetch(urlRegistroVentas, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: subtotal, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) })
-            .then(() => { window.print(); carrito = []; document.getElementById('paga-con').value = ''; document.getElementById('input-cliente').value = ''; update(); });
+            // 2. DISPARAR IMPRESIÓN INMEDIATA (SIN ESPERAR AL EXCEL)
+            window.print();
+
+            // 3. ENVIAR AL EXCEL EN SEGUNDO PLANO
+            fetch(urlRegistroVentas, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain' }, 
+                body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: subtotal, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) 
+            });
+
+            // 4. LIMPIAR CAJA
+            carrito = []; document.getElementById('paga-con').value = ''; document.getElementById('input-cliente').value = ''; update();
         }
     </script>
 </body>
