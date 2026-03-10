@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAJA | Pizzería Popular</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        :root { --bg-dark: #121212; --bg-panel: #1e1e1e; --primary: #FFC107; --accent: #FF3D00; --text: #ffffff; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: var(--bg-dark); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* PANTALLA DE BLOQUEO */
+        #bloqueo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+        .input-pass { padding: 15px; border-radius: 8px; border: 2px solid var(--primary); background: #222; color: white; font-size: 1.5rem; text-align: center; width: 200px; letter-spacing: 5px; }
+
+        /* INTERFAZ DE CAJA */
+        #app-caja { display: flex; width: 100%; height: 100%; }
+        .panel-menu { flex: 2; display: flex; flex-direction: column; padding: 20px; background: var(--bg-dark); overflow-y: auto; border-right: 2px solid #333; }
+        .header-caja { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .header-caja h1 { font-family: 'Oswald', sans-serif; color: var(--primary); margin: 0; font-size: 1.8rem; }
+        
+        .filtros { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
+        .btn-filtro { background: #333; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-family: 'Oswald', sans-serif; cursor: pointer; white-space: nowrap; font-size: 1rem; }
+        .btn-filtro:hover, .btn-filtro.active { background: var(--primary); color: #000; }
+
+        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; }
+        .btn-producto { background: var(--bg-panel); border: 1px solid #444; border-radius: 8px; padding: 15px 10px; color: white; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; height: 105px; transition: 0.2s; }
+        .btn-producto:hover { background: #333; border-color: var(--primary); }
+        .btn-producto .nombre { font-weight: bold; font-size: 0.85rem; line-height: 1.2; }
+        .btn-producto .precio { color: var(--primary); font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
+        .btn-producto .variante { font-size: 0.7rem; color: #aaa; background: #333; padding: 2px 5px; border-radius: 3px; margin-bottom: 3px; }
+
+        .panel-ticket { flex: 1; min-width: 350px; max-width: 420px; background: var(--bg-panel); display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; border-left: 2px solid #000; }
+        .ticket-header { font-family: 'Oswald', sans-serif; font-size: 1.5rem; text-align: center; color: white; margin-bottom: 15px; border-bottom: 2px dashed #444; padding-bottom: 10px; }
+        .lista-items { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+        .item-cart { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; font-size: 0.9rem; }
+        .item-cart-controles { display: flex; align-items: center; gap: 8px; }
+        .btn-qty { background: #444; border: none; color: white; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-qty:hover { background: var(--primary); color: #000; }
+        
+        .seccion-cobro { border-top: 2px solid #444; padding-top: 15px; }
+        .total-display { font-family: 'Oswald', sans-serif; font-size: 2.2rem; color: var(--primary); text-align: right; margin-bottom: 10px; }
+        .vuelto-display { display: flex; justify-content: space-between; align-items: center; background: rgba(37, 211, 102, 0.1); padding: 10px; border-radius: 6px; border: 1px solid #25D366; margin-top: 10px; }
+        .input-caja { background: #121212; border: 1px solid #555; color: white; padding: 12px; border-radius: 6px; font-size: 1.1rem; text-align: right; width: 100%; box-sizing: border-box; }
+        .btn-cobrar { background: #25D366; color: #000; font-family: 'Oswald', sans-serif; font-size: 1.6rem; border: none; padding: 15px; border-radius: 8px; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; }
+        .btn-pago { flex: 1; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-pago.active { background: #4FC3F7; color: #000; border-color: #4FC3F7; }
+
+        /* MODAL DOCENAS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-docena { background: #1a1a1a; width: 90%; max-width: 480px; height: 80vh; border-radius: 12px; border: 2px solid var(--primary); display: flex; flex-direction: column; }
+        .modal-header { padding: 15px 20px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+        .modal-footer { padding: 20px; background: #222; border-top: 1px solid #333; }
+        .stepper-docena { display: flex; align-items: center; background: #000; border-radius: 6px; border: 1px solid #444; height: 35px; }
+        .stepper-docena button { background: none; border: none; color: var(--primary); width: 35px; height: 100%; cursor: pointer; font-size: 1.2rem; }
+
+        #ticket-impresion { display: none; }
+        @media print {
+            #app-caja, #bloqueo, .modal-overlay { display: none !important; }
+            body { background: white; color: black; }
+            #ticket-impresion { display: block !important; width: 72mm; margin: 0 auto; font-family: 'Courier New', monospace; font-size: 12px; }
+            .t-center { text-align: center; } .t-bold { font-weight: bold; } .t-line { border-top: 1px dashed black; margin: 4px 0; }
+            .t-item { display: flex; justify-content: space-between; margin-bottom: 5px; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bloqueo">
+        <h1 style="font-family:'Oswald'; color:var(--primary); letter-spacing:2px;">PIZZERÍA POPULAR</h1>
+        <input type="password" id="pass" class="input-pass" placeholder="CLAVE" autofocus onkeydown="if(event.key==='Enter') validar()">
+        <button class="btn-filtro" onclick="validar()" style="padding: 15px 40px; font-size: 1.2rem;">ACCEDER AL SISTEMA</button>
+    </div>
+
+    <div id="app-caja" style="display:none;">
+        <div class="panel-menu">
+            <div class="header-caja">
+                <h1>SISTEMA DE VENTAS</h1>
+                <div id="loading"><i class="fas fa-spinner fa-spin"></i></div>
+            </div>
+            
+            <div class="filtros">
+                <button class="btn-filtro active" id="btn-f-horneadas" onclick="filtrar('PIZZAS_HORNEADAS', 'btn-f-horneadas')">Pizzas Horneadas</button>
+                <button class="btn-filtro" id="btn-f-hornear" onclick="filtrar('PIZZAS_HORNEAR', 'btn-f-hornear')">Pizzas P/Hornear</button>
+                <button class="btn-filtro" id="btn-f-empanadas" onclick="filtrar('EMPANADAS', 'btn-f-empanadas')">Empanadas</button>
+                <button class="btn-filtro" id="btn-f-fatays" onclick="filtrar('FATAYS', 'btn-f-fatays')">Fatays</button>
+                <button class="btn-filtro" id="btn-f-promos" onclick="filtrar('PROMOS', 'btn-f-promos')">Promos</button>
+                <button class="btn-filtro" id="btn-f-bebidas" onclick="filtrar('BEBIDAS', 'btn-f-bebidas')">Bebidas</button>
+                <button class="btn-filtro" id="btn-f-m-horneadas" onclick="filtrar('MEDIAS_HORNEADAS', 'btn-f-m-horneadas')">1/2 Horneada</button>
+                <button class="btn-filtro" id="btn-f-m-hornear" onclick="filtrar('MEDIAS_HORNEAR', 'btn-f-m-hornear')">1/2 P/Hornear</button>
+                <button class="btn-filtro" id="btn-f-extras" onclick="filtrar('EXTRAS', 'btn-f-extras')" style="border: 1px solid var(--accent);">Extras</button>
+            </div>
+            
+            <div class="grid-productos" id="grid-productos"></div>
+        </div>
+
+        <div class="panel-ticket">
+            <div class="ticket-header">Venta Mostrador</div>
+            <div class="lista-items" id="cart-items"></div>
+            
+            <div class="seccion-cobro">
+                <div class="total-display" id="total-display">$0</div>
+                <div class="opciones-pago" style="display:flex; gap:10px; margin-bottom:10px;">
+                    <button class="btn-pago active" id="btn-efectivo" onclick="setMetodoPago('Efectivo')">Efectivo</button>
+                    <button class="btn-pago" id="btn-transferencia" onclick="setMetodoPago('Transferencia')">Transf/MP</button>
+                </div>
+                <div id="box-vuelto">
+                    <input type="number" id="paga-con" class="input-caja" placeholder="Paga con: $" oninput="calcularVuelto()">
+                    <div class="vuelto-display"><span>Vuelto:</span><strong id="display-vuelto">$0</strong></div>
+                </div>
+                <input type="text" id="input-cliente" class="input-caja" placeholder="Nombre del Cliente" style="margin-top:10px; text-align:left;">
+                <button class="btn-cobrar" id="btn-cobrar" onclick="cobrar()" disabled>COBRAR E IMPRIMIR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-docena" class="modal-overlay">
+        <div class="modal-docena">
+            <div class="modal-header">
+                <div>
+                    <h2 id="md-title" style="margin:0; font-family:'Oswald'; color:var(--primary);">Armar Docena</h2>
+                    <div style="font-size:0.9rem; color:#aaa;">Llevás: <span id="md-count" style="color:#fff; font-weight:bold;">0</span> / 12</div>
+                </div>
+                <button onclick="cerrarModalDocena()" style="background:none; border:none; color:white; font-size:2.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body" id="md-sabores"></div>
+            <div class="modal-footer">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span>Precio Final:</span><strong id="md-total" style="color:var(--primary); font-size:1.5rem;">$0</strong></div>
+                <button id="btn-confirmar-docena" class="btn-cobrar" onclick="confirmarDocena()" disabled>AGREGAR DOCENA AL TICKET</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ticket-impresion"></div>
+
+    <script>
+        const CONST_PASSWORD = "1650"; // LA CLAVE QUE ME PEDISTE
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
+        const urlRegistroVentas = 'https://script.google.com/macros/s/AKfycbwHNEo_QRRQTm0fZBr_q-DkiKhJhzbMMDqj5xNgvbVv8WghP_i1I14BjGU4YFQ06hFX/exec';
+
+        let catalogo = [], carrito = [], subtotal = 0, metodoPago = 'Efectivo';
+        let dbClasicas = [], dbPremium = [], precioBaseClasica = 0, promoDocenaItem = null;
+        let docenaActual = null, docenaSeleccion = {}, docenaCantTotal = 0, docenaPrecioExtra = 0;
+
+        function validar() {
+            if (document.getElementById('pass').value === CONST_PASSWORD) {
+                document.getElementById('bloqueo').style.display = 'none';
+                document.getElementById('app-caja').style.display = 'flex';
+                cargarMenu();
+            } else { alert("Clave Incorrecta"); document.getElementById('pass').value = ''; }
+        }
+
+        function cargarMenu() {
+            fetch(csvUrl).then(r => r.text()).then(csvText => {
+                document.getElementById('loading').style.display = 'none';
+                Papa.parse(csvText, {
+                    header: true, skipEmptyLines: true,
+                    complete: function(r) { procesar(r.data); }
+                });
+            });
+        }
+
+        function formatPrice(n) { return '$' + n.toLocaleString('es-AR'); }
+        function cleanPrice(s) { return parseInt(s.toString().replace(/[^0-9]/g, '')) || 0; }
+        function normalize(s) { return s ? s.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ') : ''; }
+
+        function procesar(data) {
+            data.forEach(item => {
+                if (!item.SECCION || !item.NOMBRE || normalize(item.SECCION) === 'CONFIGURACION') return;
+                // Filtro para quitar docenas especiales de la lista
+                if (item.NOMBRE.toUpperCase().includes('DOCENA') && item.NOMBRE.toUpperCase().includes('ESPECIAL')) return;
+
+                let p1 = cleanPrice(item.PRECIO_1), p2 = cleanPrice(item.PRECIO_2), seccion = normalize(item.SECCION);
+                let isDocena = item.NOMBRE.toUpperCase().includes('DOCENA'), isFatay = item.NOMBRE.toUpperCase().includes('FATAY') || seccion.includes('FATAY');
+
+                if (isDocena && !isFatay && !promoDocenaItem) promoDocenaItem = { nombre: item.NOMBRE, precio: p1 };
+                if (seccion.includes('CLASICAS') && !isDocena) { dbClasicas.push(item); if (precioBaseClasica === 0) precioBaseClasica = p1; }
+                if (seccion.includes('PREMIUM') && !isDocena) dbPremium.push(item);
+
+                if (seccion.includes('MEDIA')) {
+                    if(p2 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Horneada', precio: p2, categoria: 'MEDIAS_HORNEADAS', isDocena: false });
+                    if(p1 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Para Hornear', precio: p1, categoria: 'MEDIAS_HORNEAR', isDocena: false });
+                } else if(seccion.includes('PIZZA')) {
+                    if(p2 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Horneada', precio: p2, categoria: 'PIZZAS_HORNEADAS', isDocena: false });
+                    if(p1 > 0) catalogo.push({ nombre: item.NOMBRE, variante: 'Para Hornear', precio: p1, categoria: 'PIZZAS_HORNEAR', isDocena: false });
+                } else if(isFatay) {
+                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'FATAYS', isDocena: isDocena });
+                } else if(seccion.includes('EMPANADA')) {
+                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'EMPANADAS', isDocena: isDocena });
+                } else if(seccion.includes('PROMO')) {
+                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'PROMOS', isDocena: isDocena });
+                } else if(seccion.includes('BEBIDA') || seccion.includes('CERVEZA')) {
+                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'BEBIDAS', isDocena: false });
+                } else if(seccion.includes('EXTRA')) {
+                    catalogo.push({ nombre: item.NOMBRE, variante: '', precio: p1, categoria: 'EXTRAS', isDocena: false });
+                }
+            });
+            // Ordenar para que Docena aparezca al final
+            catalogo.sort((a, b) => (a.isDocena && !b.isDocena) ? 1 : (!a.isDocena && b.isDocena) ? -1 : 0);
+            filtrar('PIZZAS_HORNEADAS', 'btn-f-horneadas');
+        }
+
+        function filtrar(cat, id) {
+            document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            const grid = document.getElementById('grid-productos'); grid.innerHTML = '';
+            catalogo.filter(i => i.categoria === cat).forEach(item => {
+                let btn = document.createElement('button'); btn.className = 'btn-producto';
+                btn.onclick = () => { if (item.isDocena && item.categoria !== 'FATAYS') abrirModalDocena(item); else add(item.nombre, item.variante, item.precio, item.isDocena, item.categoria); };
+                btn.innerHTML = `<div class="nombre">${item.nombre}</div>${item.variante ? `<div class="variante">${item.variante}</div>` : ''}<div class="precio">${formatPrice(item.precio)}</div>`;
+                grid.appendChild(btn);
+            });
+        }
+
+        function autoEmp() {
+            if (!promoDocenaItem) return;
+            let sueltas = carrito.filter(i => i.categoria === 'EMPANADAS' && !i.isDocena);
+            let totalSueltas = sueltas.reduce((s, i) => s + i.cantidad, 0);
+            while (totalSueltas >= 12) {
+                let sab = {}, rec = 0, extra = 0;
+                for (let i = 0; i < carrito.length; i++) {
+                    let it = carrito[i];
+                    if (it.categoria === 'EMPANADAS' && !it.isDocena) {
+                        while (it.cantidad > 0 && rec < 12) {
+                            it.cantidad--; rec++; sab[it.nombre] = (sab[it.nombre] || 0) + 1;
+                            if (dbPremium.some(p => p.NOMBRE === it.nombre)) extra += (it.precio - precioBaseClasica);
+                        }
+                    }
+                    if (rec === 12) break;
+                }
+                carrito = carrito.filter(i => i.cantidad > 0);
+                let v = Object.entries(sab).map(([n, c]) => `${c}x ${n}`).join(' | ');
+                add(promoDocenaItem.nombre, v, promoDocenaItem.precio + extra, true, 'PROMOS');
+                totalSueltas -= 12;
+            }
+        }
+
+        function add(n, v, p, d, c) {
+            let ex = carrito.find(i => i.nombre === n && i.variante === v);
+            if (ex && !d) ex.cantidad++; else carrito.push({ nombre: n, variante: v, precio: p, cantidad: 1, isDocena: d, categoria: c });
+            autoEmp(); update();
+        }
+
+        function update() {
+            const container = document.getElementById('cart-items'); container.innerHTML = ''; subtotal = 0;
+            if (carrito.length === 0) { container.innerHTML = '<p style="text-align:center; color:#666; margin-top:40px;">No hay productos</p>'; document.getElementById('btn-cobrar').disabled = true; }
+            else {
+                document.getElementById('btn-cobrar').disabled = false;
+                carrito.forEach((item, i) => {
+                    let total = item.precio * item.cantidad; subtotal += total;
+                    container.innerHTML += `<div class="item-cart"><div><b>${item.nombre}</b><br><small style="color:#aaa;">${item.variante}</small></div><div class="item-cart-controles"><button class="btn-qty" onclick="cant(${i},-1)">-</button><b>${item.cantidad}</b><button class="btn-qty" onclick="cant(${i},1)">+</button></div><div>${formatPrice(total)}</div></div>`;
+                });
+            }
+            document.getElementById('total-display').innerText = formatPrice(subtotal); calcularVuelto();
+        }
+
+        function cant(i, d) { carrito[i].cantidad += d; if (carrito[i].cantidad <= 0) carrito.splice(i, 1); autoEmp(); update(); }
+        function setMetodoPago(m) { metodoPago = m; document.getElementById('btn-efectivo').classList.toggle('active', m === 'Efectivo'); document.getElementById('btn-transferencia').classList.toggle('active', m !== 'Efectivo'); document.getElementById('box-vuelto').style.opacity = m === 'Efectivo' ? '1' : '0.2'; }
+        function calcularVuelto() { let paga = parseFloat(document.getElementById('paga-con').value) || 0; let v = paga - subtotal; document.getElementById('display-vuelto').innerText = (paga > 0 && v >= 0) ? formatPrice(v) : "$0"; }
+
+        function abrirModalDocena(item) {
+            docenaActual = item; docenaSeleccion = {}; docenaCantTotal = 0; docenaPrecioExtra = 0;
+            document.getElementById('md-title').innerText = item.nombre;
+            let h = '<h4 style="border-bottom:1px solid #333; padding-bottom:5px;">Clásicas</h4>';
+            dbClasicas.forEach(e => {
+                let n = e.NOMBRE.replace(/'/g, "\\'");
+                h += `<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span>${e.NOMBRE}</span><div class="stepper-docena"><button onclick="gusto('${n}',-1,false,0)">-</button><span id="md-qty-${n.replace(/\s+/g,'')}" style="width:30px; text-align:center;">0</span><button onclick="gusto('${n}',1,false,0)">+</button></div></div>`;
+            });
+            h += '<h4 style="border-bottom:1px solid #333; padding-bottom:5px; color:var(--accent);">Premium</h4>';
+            dbPremium.forEach(e => {
+                let n = e.NOMBRE.replace(/'/g, "\\'"), ex = cleanPrice(e.PRECIO_1) - precioBaseClasica;
+                h += `<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span>${e.NOMBRE} (+${ex})</span><div class="stepper-docena"><button onclick="gusto('${n}',-1,true,${ex})">-</button><span id="md-qty-${n.replace(/\s+/g,'')}" style="width:30px; text-align:center;">0</span><button onclick="gusto('${n}',1,true,${ex})">+</button></div></div>`;
+            });
+            document.getElementById('md-sabores').innerHTML = h; document.getElementById('modal-docena').style.display = 'flex'; uiDocena();
+        }
+
+        function gusto(n, d, p, e) {
+            let a = docenaSeleccion[n] || 0; if ((d > 0 && docenaCantTotal >= 12) || (d < 0 && a <= 0)) return;
+            docenaSeleccion[n] = a + d; docenaCantTotal += d; if (p) docenaPrecioExtra += (d * e);
+            document.getElementById(`md-qty-${n.replace(/\s+/g,'')}`).innerText = docenaSeleccion[n]; uiDocena();
+        }
+
+        function uiDocena() {
+            document.getElementById('md-count').innerText = docenaCantTotal;
+            document.getElementById('md-total').innerText = formatPrice(docenaActual.precio + docenaPrecioExtra);
+            document.getElementById('btn-confirmar-docena').disabled = docenaCantTotal !== 12;
+        }
+
+        function cerrarModalDocena() { document.getElementById('modal-docena').style.display = 'none'; }
+        function confirmarDocena() {
+            let s = Object.entries(docenaSeleccion).filter(([n, c]) => c > 0).map(([n, c]) => `${c}x ${n}`).join(' | ');
+            add(docenaActual.nombre, s, docenaActual.precio + docenaPrecioExtra, true, 'PROMOS'); cerrarModalDocena();
+        }
+
+        function cobrar() {
+            let cli = document.getElementById('input-cliente').value || "Mostrador", fec = new Date().toLocaleDateString('es-AR'), hor = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+            let t = `<div class="t-center t-bold" style="font-size:16px;">PIZZERÍA POPULAR</div><div class="t-center">Mostrador - #${Math.floor(100+Math.random()*900)}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${cli}</div><div class="t-line"></div>`;
+            let detExcel = [], scriptCart = [];
+            carrito.forEach(it => {
+                let v = '';
+                if (it.isDocena && it.variante) {
+                    v = it.variante.split(' | ').map(s => `<div style="margin-left:10px;">• ${s}</div>`).join('');
+                } else if (it.variante) {
+                    v = `<div style="margin-left:10px;">• ${it.variante}</div>`;
+                }
+                t += `<div class="t-item"><div><b>${it.cantidad}x ${it.nombre}</b>${v}</div><div>${formatPrice(it.precio*it.cantidad)}</div></div>`;
+                detExcel.push(`${it.cantidad}x ${it.nombre} [${it.variante}]`);
+                scriptCart.push({ name: it.nombre, variant: it.variante, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena });
+            });
+            t += `<div class="t-line"></div><div class="t-total">TOTAL: ${formatPrice(subtotal)}</div><div>Pago: ${metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px;">¡Gracias por tu compra!</div>`;
+            document.getElementById('ticket-impresion').innerHTML = t;
+            fetch(urlRegistroVentas, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: subtotal, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) })
+            .then(() => { window.print(); carrito = []; document.getElementById('paga-con').value = ''; document.getElementById('input-cliente').value = ''; update(); });
+        }
+    </script>
+</body>
+</html>
