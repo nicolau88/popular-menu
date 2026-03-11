@@ -12,6 +12,10 @@
         :root { --bg-dark: #121212; --bg-panel: #1e1e1e; --primary: #FFC107; --accent: #FF3D00; --text: #ffffff; }
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: var(--bg-dark); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
         
+        /* Ocultar flechas del input number */
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
         /* PANTALLA DE BLOQUEO */
         #bloqueo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
         .input-pass { padding: 15px; border-radius: 8px; border: 2px solid var(--primary); background: #222; color: white; font-size: 1.5rem; text-align: center; width: 200px; letter-spacing: 5px; }
@@ -43,30 +47,38 @@
         .btn-qty:hover { background: var(--primary); color: #000; }
         
         .seccion-cobro { border-top: 2px solid #444; padding-top: 15px; }
-        .total-display { font-family: 'Oswald', sans-serif; font-size: 2.2rem; color: var(--primary); text-align: right; margin-bottom: 10px; }
         .vuelto-display { display: flex; justify-content: space-between; align-items: center; background: rgba(37, 211, 102, 0.1); padding: 10px; border-radius: 6px; border: 1px solid #25D366; margin-top: 10px; }
         .input-caja { background: #121212; border: 1px solid #555; color: white; padding: 12px; border-radius: 6px; font-size: 1.1rem; text-align: right; width: 100%; box-sizing: border-box; }
         .btn-cobrar { background: #25D366; color: #000; font-family: 'Oswald', sans-serif; font-size: 1.6rem; border: none; padding: 15px; border-radius: 8px; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; }
-        .btn-pago { flex: 1; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-pago { flex: 1; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem;}
         .btn-pago.active { background: #4FC3F7; color: #000; border-color: #4FC3F7; }
 
-        /* MODAL DOCENAS */
+        /* MODALES (Docenas, Descuento, Historial) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-docena { background: #1a1a1a; width: 90%; max-width: 480px; height: 80vh; border-radius: 12px; border: 2px solid var(--primary); display: flex; flex-direction: column; }
+        .modal-content { background: #1a1a1a; width: 90%; max-width: 480px; height: 80vh; border-radius: 12px; border: 2px solid var(--primary); display: flex; flex-direction: column; }
         .modal-header { padding: 15px 20px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
         .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
         .modal-footer { padding: 20px; background: #222; border-top: 1px solid #333; }
         .stepper-docena { display: flex; align-items: center; background: #000; border-radius: 6px; border: 1px solid #444; height: 35px; }
         .stepper-docena button { background: none; border: none; color: var(--primary); width: 35px; height: 100%; cursor: pointer; font-size: 1.2rem; }
+        .close-btn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
 
+        /* IMPRESIÓN (TICKET 100% NEGRO Y GRUESO) */
         #ticket-impresion { display: none; }
         @media print {
             #app-caja, #bloqueo, .modal-overlay { display: none !important; }
-            body { background: white; color: black; }
-            #ticket-impresion { display: block !important; width: 72mm; margin: 0 auto; font-family: 'Courier New', monospace; font-size: 12px; }
-            .t-center { text-align: center; } .t-bold { font-weight: bold; } .t-line { border-top: 1px dashed black; margin: 4px 0; }
-            .t-item { display: flex; justify-content: space-between; margin-bottom: 5px; align-items: flex-start; border-bottom: 1px dotted #ccc; padding-bottom: 3px; }
-            .t-desc { font-size: 10px; font-style: italic; margin-left: 10px; display: block; }
+            body { background: white !important; padding: 0; margin: 0; font-family: 'Courier New', monospace; }
+            
+            /* FUERZA TODO A NEGRO Y LETRA GRUESA */
+            * { color: #000 !important; font-weight: 900 !important; text-shadow: none !important; background: transparent !important; }
+            
+            #ticket-impresion { display: block !important; width: 72mm; margin: 0 auto; font-size: 14px; line-height: 1.2; }
+            .t-center { text-align: center; } 
+            .t-bold { font-size: 18px; } 
+            .t-line { border-top: 2px dashed black; margin: 6px 0; }
+            .t-item { display: flex; justify-content: space-between; margin-bottom: 5px; align-items: flex-start; border-bottom: 2px dotted #000; padding-bottom: 4px; }
+            .t-desc { font-size: 12px; margin-left: 10px; display: block; font-style: normal !important; text-transform: uppercase;}
+            .t-var { margin-left:10px; font-size:12px; }
         }
     </style>
 </head>
@@ -81,8 +93,13 @@
     <div id="app-caja" style="display:none;">
         <div class="panel-menu">
             <div class="header-caja">
-                <h1>Caja - Pizzeria Popular (6 y 66)</h1>
-                <div id="loading"><i class="fas fa-spinner fa-spin"></i></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h1>Caja - Pizzeria Popular (6 y 66)</h1>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <div id="loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></div>
+                        <button onclick="abrirHistorial()" style="background:#333; color:white; border:1px solid #555; padding:8px 15px; border-radius:6px; cursor:pointer; font-family:'Oswald';"><i class="fas fa-print"></i> Últimos Tickets</button>
+                    </div>
+                </div>
             </div>
             
             <div class="filtros">
@@ -105,15 +122,26 @@
             <div class="lista-items" id="cart-items"></div>
             
             <div class="seccion-cobro">
-                <div class="total-display" id="total-display">$0</div>
-                <div class="opciones-pago" style="display:flex; gap:10px; margin-bottom:10px;">
-                    <button class="btn-pago active" id="btn-efectivo" onclick="setMetodoPago('Efectivo')">Efectivo</button>
-                    <button class="btn-pago" id="btn-transferencia" onclick="setMetodoPago('Transferencia')">Transferencia</button>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;">
+                    <button onclick="abrirDescuento()" style="background:#333; color:white; border:1px solid #555; padding:8px 10px; border-radius:6px; cursor:pointer;"><i class="fas fa-gift" style="color:var(--accent);"></i> Descuento</button>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-family:'Oswald'; font-size:2rem; color:var(--primary);">$</span>
+                        <input type="number" id="total-display" oninput="calcularVuelto()" style="background:transparent; border:none; border-bottom:2px dashed var(--primary); color:var(--primary); font-family:'Oswald'; font-size:2.5rem; text-align:right; width:130px; outline:none;">
+                    </div>
                 </div>
+
+                <div class="opciones-pago" style="display:flex; gap:5px; margin-bottom:10px;">
+                    <button class="btn-pago active" id="btn-efectivo" onclick="setMetodoPago('Efectivo')">Efectivo</button>
+                    <button class="btn-pago" id="btn-transferencia" onclick="setMetodoPago('Transferencia')">Transf.</button>
+                    <button class="btn-pago" id="btn-debcred" onclick="setMetodoPago('Deb/Cred')">Deb/Cred</button>
+                </div>
+
                 <div id="box-vuelto">
                     <input type="number" id="paga-con" class="input-caja" placeholder="Paga con: $" oninput="calcularVuelto()">
                     <div class="vuelto-display"><span>Vuelto:</span><strong id="display-vuelto">$0</strong></div>
                 </div>
+
                 <input type="text" id="input-cliente" class="input-caja" placeholder="Nombre del Cliente" style="margin-top:10px; text-align:left;">
                 <button class="btn-cobrar" id="btn-cobrar" onclick="cobrar()" disabled>COBRAR E IMPRIMIR</button>
             </div>
@@ -127,13 +155,33 @@
                     <h2 id="md-title" style="margin:0; font-family:'Oswald'; color:var(--primary);">Armar Docena</h2>
                     <div style="font-size:0.9rem; color:#aaa;">Llevás: <span id="md-count" style="color:#fff; font-weight:bold;">0</span> / 12</div>
                 </div>
-                <button onclick="cerrarModalDocena()" style="background:none; border:none; color:white; font-size:2.5rem; cursor:pointer;">&times;</button>
+                <button onclick="cerrarModalDocena()" class="close-btn">&times;</button>
             </div>
             <div class="modal-body" id="md-sabores"></div>
             <div class="modal-footer">
                 <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span>Precio Final:</span><strong id="md-total" style="color:var(--primary); font-size:1.5rem;">$0</strong></div>
-                <button id="btn-confirmar-docena" class="btn-cobrar" onclick="confirmarDocena()" disabled>AGREGAR DOCENA AL TICKET</button>
+                <button id="btn-confirmar-docena" class="btn-cobrar" onclick="confirmarDocena()" disabled>AGREGAR</button>
             </div>
+        </div>
+    </div>
+
+    <div id="desc-modal" class="modal-overlay">
+        <div class="modal-content" style="height:auto; max-height:300px;">
+            <div class="modal-header"><h2 style="margin:0; color:var(--primary); font-family:'Oswald';">Aplicar Descuento</h2><button onclick="cerrarDescuento()" class="close-btn">&times;</button></div>
+            <div class="modal-body">
+                <input type="number" id="input-desc" class="input-caja" placeholder="Ingresar valor (Ej: 10 o 2000)" style="margin-bottom:15px; width:100%;">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-cobrar" style="background:#4FC3F7; font-size:1.2rem; margin:0;" onclick="aplicarDescuento('%')">% Porcentaje</button>
+                    <button class="btn-cobrar" style="background:#25D366; font-size:1.2rem; margin:0;" onclick="aplicarDescuento('$')">$ Monto Fijo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historial-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header"><h2 style="margin:0; color:var(--primary); font-family:'Oswald';">Últimos 50 Tickets</h2><button onclick="cerrarHistorial()" class="close-btn">&times;</button></div>
+            <div id="lista-historial" class="modal-body" style="padding:10px;"></div>
         </div>
     </div>
 
@@ -144,7 +192,7 @@
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
         const urlRegistroVentas = 'https://script.google.com/macros/s/AKfycbwHNEo_QRRQTm0fZBr_q-DkiKhJhzbMMDqj5xNgvbVv8WghP_i1I14BjGU4YFQ06hFX/exec';
 
-        let catalogo = [], carrito = [], subtotal = 0, metodoPago = 'Efectivo';
+        let catalogo = [], carrito = [], subtotalReal = 0, metodoPago = 'Efectivo';
         let dbClasicas = [], dbPremium = [], precioBaseClasica = 0, promoDocenaItem = null;
         let docenaActual = null, docenaSeleccion = {}, docenaCantTotal = 0, docenaPrecioExtra = 0;
 
@@ -166,10 +214,10 @@
             });
         }
 
-        function formatPrice(n) { return '$' + n.toLocaleString('es-AR'); }
+        function formatPrice(n) { return n.toLocaleString('es-AR'); } // Devuelve numero con puntos sin el $ para cálculos visuales si se quiere
         function cleanPrice(s) { return parseInt(s.toString().replace(/[^0-9]/g, '')) || 0; }
         function normalize(s) { return s ? s.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ') : ''; }
-        function cleanEmojis(str) { return str.replace(/[🔥❄️⭐🥟🌓🍕🥤🥤🥤🥤★🌿]/g, '').trim(); }
+        function cleanEmojis(str) { return str.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}⭐❄️🔥🌓]/gu, '').trim(); }
 
         function procesar(data) {
             data.forEach(item => {
@@ -223,7 +271,7 @@
                 btn.onclick = () => { if (item.isDocena && item.categoria !== 'FATAYS') abrirModalDocena(item); else add(item.nombre, item.variante, item.precio, item.isDocena, item.categoria, item.descripcion); };
                 
                 let descHtml = (cat === 'PROMOS' && item.descripcion) ? `<div class="desc-promo">${item.descripcion}</div>` : "";
-                btn.innerHTML = `<div class="nombre">${item.nombre}</div>${item.variante ? `<div class="variante">${item.variante}</div>` : ''}${descHtml}<div class="precio">${formatPrice(item.precio)}</div>`;
+                btn.innerHTML = `<div class="nombre">${item.nombre}</div>${item.variante ? `<div class="variante">${item.variante}</div>` : ''}${descHtml}<div class="precio">$${formatPrice(item.precio)}</div>`;
                 grid.appendChild(btn);
             });
         }
@@ -258,22 +306,54 @@
         }
 
         function update() {
-            const container = document.getElementById('cart-items'); container.innerHTML = ''; subtotal = 0;
+            const container = document.getElementById('cart-items'); container.innerHTML = ''; subtotalReal = 0;
             if (carrito.length === 0) { container.innerHTML = '<p style="text-align:center; color:#666; margin-top:40px;">No hay productos</p>'; document.getElementById('btn-cobrar').disabled = true; }
             else {
                 document.getElementById('btn-cobrar').disabled = false;
                 carrito.forEach((item, i) => {
-                    let total = item.precio * item.cantidad; subtotal += total;
-                    container.innerHTML += `<div class="item-cart"><div><b>${item.nombre}</b><br><small style="color:#aaa;">${item.variante}</small></div><div class="item-cart-controles"><button class="btn-qty" onclick="cant(${i},-1)">-</button><b>${item.cantidad}</b><button class="btn-qty" onclick="cant(${i},1)">+</button></div><div>${formatPrice(total)}</div></div>`;
+                    let total = item.precio * item.cantidad; subtotalReal += total;
+                    container.innerHTML += `<div class="item-cart"><div><b>${item.nombre}</b><br><small style="color:#aaa;">${item.variante}</small></div><div class="item-cart-controles"><button class="btn-qty" onclick="cant(${i},-1)">-</button><b>${item.cantidad}</b><button class="btn-qty" onclick="cant(${i},1)">+</button></div><div>$${formatPrice(total)}</div></div>`;
                 });
             }
-            document.getElementById('total-display').innerText = formatPrice(subtotal); calcularVuelto();
+            // Al actualizar carrito, se resetea el input de total al subtotal real.
+            document.getElementById('total-display').value = subtotalReal; 
+            calcularVuelto();
         }
 
         function cant(i, d) { carrito[i].cantidad += d; if (carrito[i].cantidad <= 0) carrito.splice(i, 1); autoEmp(); update(); }
-        function setMetodoPago(m) { metodoPago = m; document.getElementById('btn-efectivo').classList.toggle('active', m === 'Efectivo'); document.getElementById('btn-transferencia').classList.toggle('active', m === 'Transferencia'); document.getElementById('box-vuelto').style.opacity = m === 'Efectivo' ? '1' : '0.2'; }
-        function calcularVuelto() { let paga = parseFloat(document.getElementById('paga-con').value) || 0; let v = paga - subtotal; document.getElementById('display-vuelto').innerText = (paga > 0 && v >= 0) ? formatPrice(v) : "$0"; }
+        
+        function setMetodoPago(m) { 
+            metodoPago = m; 
+            document.getElementById('btn-efectivo').classList.toggle('active', m === 'Efectivo'); 
+            document.getElementById('btn-transferencia').classList.toggle('active', m === 'Transferencia'); 
+            document.getElementById('btn-debcred').classList.toggle('active', m === 'Deb/Cred'); 
+            document.getElementById('box-vuelto').style.opacity = m === 'Efectivo' ? '1' : '0.2'; 
+            document.getElementById('paga-con').disabled = m !== 'Efectivo';
+        }
+        
+        function calcularVuelto() { 
+            let paga = parseFloat(document.getElementById('paga-con').value) || 0; 
+            let t = parseFloat(document.getElementById('total-display').value) || 0;
+            let v = paga - t; 
+            document.getElementById('display-vuelto').innerText = (paga > 0 && v >= 0) ? "$"+formatPrice(v) : "$0"; 
+        }
 
+        // --- DESCUENTOS ---
+        function abrirDescuento() { document.getElementById('desc-modal').style.display = 'flex'; document.getElementById('input-desc').value = ''; }
+        function cerrarDescuento() { document.getElementById('desc-modal').style.display = 'none'; }
+        function aplicarDescuento(tipo) {
+            let val = parseFloat(document.getElementById('input-desc').value);
+            if(!val) return;
+            let nuevoTotal = subtotalReal;
+            if(tipo === '%') nuevoTotal = subtotalReal - (subtotalReal * val / 100);
+            else nuevoTotal = subtotalReal - val;
+            
+            document.getElementById('total-display').value = Math.max(0, nuevoTotal);
+            cerrarDescuento();
+            calcularVuelto();
+        }
+
+        // --- DOCENAS ---
         function abrirModalDocena(item) {
             docenaActual = item; docenaSeleccion = {}; docenaCantTotal = 0; docenaPrecioExtra = 0;
             document.getElementById('md-title').innerText = item.nombre;
@@ -298,51 +378,92 @@
 
         function uiDocena() {
             document.getElementById('md-count').innerText = docenaCantTotal;
-            document.getElementById('md-total').innerText = formatPrice(docenaActual.precio + docenaPrecioExtra);
+            document.getElementById('md-total').innerText = "$"+formatPrice(docenaActual.precio + docenaPrecioExtra);
             document.getElementById('btn-confirmar-docena').disabled = docenaCantTotal !== 12;
         }
 
         function cerrarModalDocena() { document.getElementById('modal-docena').style.display = 'none'; }
         function confirmarDocena() {
-            let s = Object.entries(docenaSelection).filter(([n, c]) => c > 0).map(([n, c]) => `${c}x ${n}`).join(' | ');
+            let s = Object.entries(docenaSeleccion).filter(([n, c]) => c > 0).map(([n, c]) => `${c}x ${n}`).join(' | ');
             add(docenaActual.nombre, s, docenaActual.precio + docenaPrecioExtra, true, 'PROMOS', ""); cerrarModalDocena();
         }
 
+        // --- HISTORIAL / REIMPRESIÓN ---
+        function abrirHistorial() {
+            let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || [];
+            let cont = document.getElementById('lista-historial');
+            cont.innerHTML = '';
+            if(hist.length === 0) { cont.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:20px;">No hay tickets guardados</p>'; }
+            hist.forEach((t, i) => {
+                cont.innerHTML += `
+                <div style="background:#222; padding:15px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><b style="color:var(--primary); font-size:1.1rem;">Turno #${t.id}</b> - ${t.time}<br><span style="color:#ddd;">Cliente: ${t.cliente}</span><br><b>$${formatPrice(t.total)}</b></div>
+                    <button onclick="reimprimir(${i})" style="background:var(--primary); color:#000; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:1.2rem;"><i class="fas fa-print"></i></button>
+                </div>`;
+            });
+            document.getElementById('historial-modal').style.display = 'flex';
+        }
+        
+        function cerrarHistorial() { document.getElementById('historial-modal').style.display = 'none'; }
+        
+        function reimprimir(i) {
+            let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || [];
+            if(hist[i]) {
+                document.getElementById('ticket-impresion').innerHTML = hist[i].html;
+                window.print();
+            }
+        }
+
+        // --- COBRAR (IMPRESIÓN TURBO Y GUARDADO) ---
         function cobrar() {
-            let cli = document.getElementById('input-cliente').value || "Mostrador", fec = new Date().toLocaleDateString('es-AR'), hor = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+            let cli = document.getElementById('input-cliente').value || "Mostrador";
+            let fec = new Date().toLocaleDateString('es-AR');
+            let hor = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
             let numTurno = Math.floor(100+Math.random()*900);
             
-            // 1. ARMAR EL TICKET
-            let t = `<div class="t-center t-bold" style="font-size:16px;">PIZZERIA POPULAR</div><div class="t-center">Turno: #${numTurno}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${cli}</div><div class="t-line"></div>`;
+            // TOMAR EL TOTAL DESDE EL INPUT (Por si hubo descuento o edición manual)
+            let totalCargar = parseFloat(document.getElementById('total-display').value) || 0;
+
+            // 1. ARMAR EL TICKET 100% NEGRO (Para imprimir y guardar)
+            let t = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center">Turno: #${numTurno}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${cli}</div><div class="t-line"></div>`;
             let detExcel = [], scriptCart = [];
             
             carrito.forEach(it => {
                 let v = '';
                 let cleanName = cleanEmojis(it.nombre);
                 let cleanVar = cleanEmojis(it.variante);
-                if (it.isDocena && it.variante) { v = cleanVar.split('|').map(s => `<div style="margin-left:10px;">- ${s.trim()}</div>`).join(''); } 
-                else if (it.variante) { v = `<div style="margin-left:10px;">- ${cleanVar}</div>`; }
-                let descHtml = (it.categoria === 'PROMOS' && it.descripcion) ? `<div class="t-desc">Incluye: ${it.descripcion}</div>` : "";
-                t += `<div class="t-item"><div><b>${it.cantidad}x ${cleanName}</b>${v}${descHtml}</div><div>${formatPrice(it.precio*it.cantidad)}</div></div>`;
+                
+                if (it.isDocena && it.variante) { v = cleanVar.split('|').map(s => `<div class="t-var">- ${s.trim()}</div>`).join(''); } 
+                else if (it.variante) { v = `<div class="t-var">- ${cleanVar}</div>`; }
+                
+                let descHtml = (it.categoria === 'PROMOS' && it.descripcion) ? `<div class="t-desc">Inc: ${cleanEmojis(it.descripcion)}</div>` : "";
+                
+                t += `<div class="t-item"><div><b>${it.cantidad}x ${cleanName}</b>${v}${descHtml}</div><div>$${formatPrice(it.precio*it.cantidad)}</div></div>`;
                 detExcel.push(`${it.cantidad}x ${cleanName} [${cleanVar}]`);
                 scriptCart.push({ name: cleanName, variant: cleanVar, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena });
             });
             
-            t += `<div class="t-line"></div><div class="t-total">TOTAL: ${formatPrice(subtotal)}</div><div>Pago: ${metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px;">PARA COCINA - #${numTurno}</div>`;
+            t += `<div class="t-line"></div><div class="t-total" style="font-size:18px; font-weight:900; text-align:right;">TOTAL: $${formatPrice(totalCargar)}</div><div>Pago: ${metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px; font-weight:900; font-size:16px;">PARA COCINA - #${numTurno}</div>`;
             document.getElementById('ticket-impresion').innerHTML = t;
             
-            // 2. DISPARAR IMPRESIÓN INMEDIATA (SIN ESPERAR AL EXCEL)
+            // 2. GUARDAR EN MEMORIA (LOCALSTORAGE - ÚLTIMOS 50)
+            let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || [];
+            hist.unshift({ id: numTurno, cliente: cli, total: totalCargar, time: hor, html: t });
+            if(hist.length > 50) hist.pop(); // Borra el más viejo si hay más de 50
+            localStorage.setItem('ticketsPizzeria', JSON.stringify(hist));
+
+            // 3. DISPARAR IMPRESIÓN INSTANTÁNEA
             window.print();
 
-            // 3. ENVIAR AL EXCEL EN SEGUNDO PLANO
+            // 4. ENVIAR AL EXCEL EN SEGUNDO PLANO
             fetch(urlRegistroVentas, { 
                 method: 'POST', 
                 mode: 'no-cors', 
                 headers: { 'Content-Type': 'text/plain' }, 
-                body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: subtotal, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) 
+                body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: totalCargar, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) 
             });
 
-            // 4. LIMPIAR CAJA
+            // 5. LIMPIAR CAJA
             carrito = []; document.getElementById('paga-con').value = ''; document.getElementById('input-cliente').value = ''; update();
         }
     </script>
