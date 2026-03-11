@@ -42,7 +42,7 @@
         .section-title i { color: var(--primary); font-size: 1.5rem; }
         .subsection-title { font-family: 'Oswald', sans-serif; font-size: 1.3rem; color: #fff; margin: 40px 0 15px; padding-left: 10px; border-left: 3px solid var(--primary); background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent); padding-top: 5px; padding-bottom: 5px; }
 
-        /* LISTAS Y ELEMENTOS DEL MENÚ (Empanadas, Bebidas) */
+        /* LISTAS Y ELEMENTOS DEL MENÚ */
         .list-group { background: rgba(35,35,35,0.7); border-radius: 12px; padding: 5px 20px; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px); }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .list-item:last-child { border-bottom: none; }
@@ -270,7 +270,7 @@
                 </div>
             
             <div style="padding: 15px 20px; background: #1a1a1a; border-top: 1px solid #333;">
-                <button id="btn-confirmar-docena" class="btn-submit" onclick="confirmDocena()" style="width: 100%; margin: 0;" disabled>AGREGAR AL CARRITO</button>
+                <button id="btn-confirm-docena" class="btn-submit" onclick="confirmDocena()" style="width: 100%; margin: 0;" disabled>AGREGAR AL CARRITO</button>
             </div>
         </div>
     </div>
@@ -278,7 +278,11 @@
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
         const numeroWhatsApp = "542215713693"; 
+        
+        // -----------------------------------------------------------------------------------
+        // 🔥 URL DEL GOOGLE APPS SCRIPT PARA GUARDAR LAS VENTAS EN EL EXCEL 🔥
         const urlRegistroVentas = 'https://script.google.com/macros/s/AKfycbwHNEo_QRRQTm0fZBr_q-DkiKhJhzbMMDqj5xNgvbVv8WghP_i1I14BjGU4YFQ06hFX/exec';
+        // -----------------------------------------------------------------------------------
 
         let cart = [];
         let costoDeEnvio = 0; 
@@ -453,6 +457,7 @@
             });
         }
 
+        // --- SISTEMA DEL CARRITO ---
         function updateMenuQty(name, price, variant, change) {
             const isDocena = name.toUpperCase().includes('DOCENA');
             const isFatay = name.toUpperCase().includes('FATAY');
@@ -570,6 +575,7 @@
             });
         }
 
+        // --- LÓGICA DEL SELECTOR DE DOCENAS ---
         function openDocenaModal(name, basePrice) {
             pendingDocena = { name, basePrice };
             docenaSelection = {};
@@ -634,7 +640,7 @@
             let currentTotal = pendingDocena.basePrice + docenaExtraPrice;
             document.getElementById('docena-total-price').innerText = formatPrice(currentTotal);
 
-            const btn = document.getElementById('btn-confirmar-docena');
+            const btn = document.getElementById('btn-confirm-docena');
             if (docenaTotalQty === 12) {
                 btn.disabled = false; btn.style.opacity = '1'; btn.style.background = '#25D366';
             } else {
@@ -680,6 +686,7 @@
             document.getElementById('efectivo-fields').style.display = pago === 'Efectivo' ? 'flex' : 'none';
         }
 
+        // --- SISTEMA DE ENVÍO Y COMANDA MEJORADA ---
         function enviarPedido() {
             const nombre = document.getElementById('cli-nombre').value.trim();
             const telefono = document.getElementById('cli-telefono').value.trim();
@@ -706,38 +713,49 @@
             const horaActual = new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
             let direccionFinal = entrega === 'delivery' ? `${direccion} (e/ ${entreCalles}) ${depto ? 'Depto: '+depto : ''}` : 'Retira por el local';
             
-            let texto = `🚨 *NUEVO PEDIDO* 🚨\n\n`;
-            texto += `👤 *Cliente:* ${nombre}\n`;
-            texto += `📞 *Teléfono:* ${telefono}\n`;
+            // NUEVA ESTRUCTURA DE COMANDA (Limpia y con mayúsculas en negrita)
+            let texto = `*NUEVO PEDIDO*\n\n`;
+            texto += `*CLIENTE:* ${nombre}\n`;
+            texto += `*TELÉFONO:* ${telefono}\n\n`;
             
             if(entrega === 'delivery') {
-                texto += `🛵 *Envío:* Delivery\n📍 *Dirección:* ${direccion}\n🛣️ *Entre calles:* ${entreCalles}\n`;
-                if(depto) texto += `🏢 *Depto/Piso:* ${depto}\n`;
-            } else { texto += `🏪 *Retira por el local*\n`; }
+                texto += `*TIPO DE ENTREGA:* Delivery\n`;
+                texto += `*DIRECCIÓN:* ${direccion}\n`;
+                texto += `*ENTRE CALLES:* ${entreCalles}\n`;
+                if(depto) texto += `*DEPTO/PISO:* ${depto}\n\n`;
+                else texto += `\n`;
+            } else { 
+                texto += `*TIPO DE ENTREGA:* Retira por el local\n\n`; 
+            }
             
-            texto += `⏱️ *Horario:* ${tipoHorario === 'Lo antes posible' ? 'Lo antes posible' : `${horaExacta} hs`}\n`;
+            texto += `*HORARIO:* ${tipoHorario === 'Lo antes posible' ? 'Lo antes posible' : `${horaExacta} hs`}\n`;
             
             if(pago === 'Efectivo') {
-                texto += `💵 *Pago:* Efectivo (Abona con $${abona})\n`;
+                texto += `*PAGO:* Efectivo (Abona con $${abona})\n`;
             } else {
-                texto += `💵 *Pago:* Transferencia\n`;
+                texto += `*PAGO:* Transferencia\n`;
             }
 
-            if(notas) texto += `📌 *Aclaraciones:* ${notas}\n`;
+            if(notas) texto += `*ACLARACIONES:* ${notas}\n`;
             
-            texto += `\n📝 *DETALLE DEL PEDIDO:*\n`;
+            texto += `\n*DETALLE DEL PEDIDO:*\n`;
 
             let subtotal = 0;
             let detalleParaExcel = [];
 
+            // Expresión regular que borra todos los emojis
+            const regexEmojis = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}⭐❄️🔥🌓🥟🍕🥤]/gu;
+
             cart.forEach(item => {
-                let cleanName = item.name.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim();
-                let cleanVariant = item.variant ? item.variant.replace(/[🔥⭐★🌿❄️]/g, '').replace(/\s{2,}/g, ' ').trim() : '';
+                // Limpiamos nombre y variante de emojis
+                let cleanName = item.name.replace(regexEmojis, '').replace(/\s{2,}/g, ' ').trim();
+                let cleanVariant = item.variant ? item.variant.replace(regexEmojis, '').replace(/\s{2,}/g, ' ').trim() : '';
                 let varianteFormat = '';
                 
                 if (item.isDocena && cleanVariant) {
                     let flavorsArray = cleanVariant.split('|');
-                    varianteFormat = '\n   ↳ _' + flavorsArray.join('_\n   ↳ _') + '_';
+                    // Lista limpia sin cursivas
+                    varianteFormat = '\n   - ' + flavorsArray.join('\n   - ');
                 } else if (!item.isDocena && cleanVariant) {
                     varianteFormat = ` (${cleanVariant})`;
                 }
@@ -746,19 +764,19 @@
                 subtotal += totalItem;
                 
                 if (item.isDocena) {
-                    texto += `▪️ ${item.quantity}x ${cleanName} - ${formatPrice(totalItem)}${varianteFormat}\n`;
+                    texto += `${item.quantity}x ${cleanName} - ${formatPrice(totalItem)}${varianteFormat}\n`;
                     detalleParaExcel.push(`${item.quantity}x ${cleanName} [${cleanVariant.replace(/\|/g, ', ')}]`);
                 } else {
-                    texto += `▪️ ${item.quantity}x ${cleanName}${varianteFormat} - ${formatPrice(totalItem)}\n`;
+                    texto += `${item.quantity}x ${cleanName}${varianteFormat} - ${formatPrice(totalItem)}\n`;
                     detalleParaExcel.push(`${item.quantity}x ${cleanName}${cleanVariant ? ' ('+cleanVariant+')' : ''}`);
                 }
             });
 
-            if (entrega === 'delivery' && costoDeEnvio > 0) texto += `▪️ Costo de Envío - ${formatPrice(costoDeEnvio)}\n`;
+            if (entrega === 'delivery' && costoDeEnvio > 0) texto += `Costo de Envío - ${formatPrice(costoDeEnvio)}\n`;
 
             let totalFinal = entrega === 'delivery' ? subtotal + costoDeEnvio : subtotal;
-            texto += `\n💰 *TOTAL A ABONAR: ${formatPrice(totalFinal)}*\n\n`;
-            if(pago === 'Transferencia') texto += `⚠️ _Te adjunto el comprobante de transferencia al alias: ${aliasTransferencia}_\n`;
+            texto += `\n*TOTAL A ABONAR: ${formatPrice(totalFinal)}*\n\n`;
+            if(pago === 'Transferencia') texto += `*NOTA:* Te adjunto el comprobante de transferencia al alias: ${aliasTransferencia}\n`;
 
             if (urlRegistroVentas !== 'PEGAR_AQUI_LA_URL_DEL_SCRIPT') {
                 let payload = {
