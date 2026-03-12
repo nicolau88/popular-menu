@@ -53,7 +53,7 @@
         .btn-pago { flex: 1; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem;}
         .btn-pago.active { background: #4FC3F7; color: #000; border-color: #4FC3F7; }
 
-        /* MODALES (Docenas, Descuento, Historial) */
+        /* MODALES */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: #1a1a1a; width: 90%; max-width: 480px; height: 80vh; border-radius: 12px; border: 2px solid var(--primary); display: flex; flex-direction: column; }
         .modal-header { padding: 15px 20px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
@@ -68,10 +68,7 @@
         @media print {
             #app-caja, #bloqueo, .modal-overlay { display: none !important; }
             body { background: white !important; padding: 0; margin: 0; font-family: 'Courier New', monospace; }
-            
-            /* FUERZA TODO A NEGRO Y LETRA GRUESA */
             * { color: #000 !important; font-weight: 900 !important; text-shadow: none !important; background: transparent !important; }
-            
             #ticket-impresion { display: block !important; width: 72mm; margin: 0 auto; font-size: 14px; line-height: 1.2; }
             .t-center { text-align: center; } 
             .t-bold { font-size: 18px; } 
@@ -97,6 +94,7 @@
                     <h1>Caja - Pizzeria Popular (6 y 66)</h1>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <div id="loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></div>
+                        <button onclick="abrirModalWA()" style="background:#25D366; color:#000; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-family:'Oswald'; font-weight:bold;"><i class="fab fa-whatsapp"></i> Imprimir WA</button>
                         <button onclick="abrirHistorial()" style="background:#333; color:white; border:1px solid #555; padding:8px 15px; border-radius:6px; cursor:pointer; font-family:'Oswald';"><i class="fas fa-print"></i> Últimos Tickets</button>
                     </div>
                 </div>
@@ -122,7 +120,6 @@
             <div class="lista-items" id="cart-items"></div>
             
             <div class="seccion-cobro">
-                
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;">
                     <button onclick="abrirDescuento()" style="background:#333; color:white; border:1px solid #555; padding:8px 10px; border-radius:6px; cursor:pointer;"><i class="fas fa-gift" style="color:var(--accent);"></i> Descuento</button>
                     <div style="display:flex; align-items:center;">
@@ -148,8 +145,9 @@
         </div>
     </div>
 
+    <!-- MODALES DOCENAS, DESCUENTOS, HISTORIAL, WA -->
     <div id="modal-docena" class="modal-overlay">
-        <div class="modal-docena">
+        <div class="modal-content">
             <div class="modal-header">
                 <div>
                     <h2 id="md-title" style="margin:0; font-family:'Oswald'; color:var(--primary);">Armar Docena</h2>
@@ -180,8 +178,28 @@
 
     <div id="historial-modal" class="modal-overlay">
         <div class="modal-content" style="max-width:500px;">
-            <div class="modal-header"><h2 style="margin:0; color:var(--primary); font-family:'Oswald';">Últimos 50 Tickets</h2><button onclick="cerrarHistorial()" class="close-btn">&times;</button></div>
+            <div class="modal-header">
+                <h2 style="margin:0; color:var(--primary); font-family:'Oswald';">Historial</h2>
+                <div>
+                    <button onclick="limpiarHistorial()" style="background:var(--accent); color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; margin-right:15px; font-weight:bold;"><i class="fas fa-trash"></i> Limpiar</button>
+                    <button onclick="cerrarHistorial()" class="close-btn">&times;</button>
+                </div>
+            </div>
             <div id="lista-historial" class="modal-body" style="padding:10px;"></div>
+        </div>
+    </div>
+
+    <div id="wa-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width:500px; height:auto;">
+            <div class="modal-header">
+                <h2 style="margin:0; color:#25D366; font-family:'Oswald';"><i class="fab fa-whatsapp"></i> Imprimir Pedido WA</h2>
+                <button onclick="cerrarModalWA()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <p style="margin-top:0; font-size:0.9rem; color:#ccc;">Pegá acá el texto que te llegó por WhatsApp:</p>
+                <textarea id="wa-text" placeholder="Pegar pedido aquí (Ctrl + V)..." style="width:100%; height:250px; background:#121212; color:#fff; border:1px solid #444; border-radius:8px; padding:10px; font-family:monospace; resize:none; box-sizing:border-box; outline:none;"></textarea>
+                <button class="btn-cobrar" onclick="imprimirWA()" style="background:#25D366; margin-top:15px; width:100%;">IMPRIMIR TICKET DE WHATSAPP</button>
+            </div>
         </div>
     </div>
 
@@ -214,7 +232,7 @@
             });
         }
 
-        function formatPrice(n) { return n.toLocaleString('es-AR'); } // Devuelve numero con puntos sin el $ para cálculos visuales si se quiere
+        function formatPrice(n) { return n.toLocaleString('es-AR'); }
         function cleanPrice(s) { return parseInt(s.toString().replace(/[^0-9]/g, '')) || 0; }
         function normalize(s) { return s ? s.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ') : ''; }
         function cleanEmojis(str) { return str.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}⭐❄️🔥🌓]/gu, '').trim(); }
@@ -222,23 +240,19 @@
         function procesar(data) {
             data.forEach(item => {
                 if (!item.SECCION || !item.NOMBRE || normalize(item.SECCION) === 'CONFIGURACION') return;
+                
+                // Ocultar el botón de la Docena Especial del menú
                 if (item.NOMBRE.toUpperCase().includes('DOCENA') && item.NOMBRE.toUpperCase().includes('ESPECIAL')) return;
-
+                
                 let p1 = cleanPrice(item.PRECIO_1), p2 = cleanPrice(item.PRECIO_2), seccion = normalize(item.SECCION);
-                let isDocena = item.NOMBRE.toUpperCase().includes('DOCENA'), isFatay = item.NOMBRE.toUpperCase().includes('FATAY') || seccion.includes('FATAY');
+                let isDocena = item.NOMBRE.toUpperCase().includes('DOCENA') && !item.NOMBRE.toUpperCase().includes('ESPECIAL');
+                let isFatay = item.NOMBRE.toUpperCase().includes('FATAY') || seccion.includes('FATAY');
 
                 if (isDocena && !isFatay && !promoDocenaItem) promoDocenaItem = { nombre: item.NOMBRE, precio: p1 };
                 if (seccion.includes('CLASICAS') && !isDocena) { dbClasicas.push(item); if (precioBaseClasica === 0) precioBaseClasica = p1; }
                 if (seccion.includes('PREMIUM') && !isDocena) dbPremium.push(item);
 
-                let prodObj = { 
-                    nombre: item.NOMBRE, 
-                    descripcion: item.DESCRIPCION || "",
-                    variante: "", 
-                    precio: p1, 
-                    categoria: "", 
-                    isDocena: isDocena 
-                };
+                let prodObj = { nombre: item.NOMBRE, descripcion: item.DESCRIPCION || "", variante: "", precio: p1, categoria: "", isDocena: isDocena };
 
                 if (seccion.includes('MEDIA')) {
                     if(p2 > 0) catalogo.push({ ...prodObj, variante: 'Horneada', precio: p2, categoria: 'MEDIAS_HORNEADAS', isDocena: false });
@@ -246,17 +260,11 @@
                 } else if(seccion.includes('PIZZA')) {
                     if(p2 > 0) catalogo.push({ ...prodObj, variante: 'Horneada', precio: p2, categoria: 'PIZZAS_HORNEADAS', isDocena: false });
                     if(p1 > 0) catalogo.push({ ...prodObj, variante: 'Para Hornear', precio: p1, categoria: 'PIZZAS_HORNEAR', isDocena: false });
-                } else if(isFatay) {
-                    catalogo.push({ ...prodObj, categoria: 'FATAYS' });
-                } else if(seccion.includes('EMPANADA')) {
-                    catalogo.push({ ...prodObj, categoria: 'EMPANADAS' });
-                } else if(seccion.includes('PROMO')) {
-                    catalogo.push({ ...prodObj, categoria: 'PROMOS' });
-                } else if(seccion.includes('BEBIDA')) {
-                    catalogo.push({ ...prodObj, categoria: 'BEBIDAS' });
-                } else if(seccion.includes('EXTRA')) {
-                    catalogo.push({ ...prodObj, categoria: 'EXTRAS' });
-                }
+                } else if(isFatay) { catalogo.push({ ...prodObj, categoria: 'FATAYS' });
+                } else if(seccion.includes('EMPANADA')) { catalogo.push({ ...prodObj, categoria: 'EMPANADAS' });
+                } else if(seccion.includes('PROMO')) { catalogo.push({ ...prodObj, categoria: 'PROMOS' });
+                } else if(seccion.includes('BEBIDA')) { catalogo.push({ ...prodObj, categoria: 'BEBIDAS' });
+                } else if(seccion.includes('EXTRA')) { catalogo.push({ ...prodObj, categoria: 'EXTRAS' }); }
             });
             catalogo.sort((a, b) => (a.isDocena && !b.isDocena) ? 1 : (!a.isDocena && b.isDocena) ? -1 : 0);
             filtrar('PIZZAS_HORNEADAS', 'btn-f-horneadas');
@@ -266,10 +274,10 @@
             document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             const grid = document.getElementById('grid-productos'); grid.innerHTML = '';
+            
             catalogo.filter(i => i.categoria === cat).forEach(item => {
                 let btn = document.createElement('button'); btn.className = 'btn-producto';
                 btn.onclick = () => { if (item.isDocena && item.categoria !== 'FATAYS') abrirModalDocena(item); else add(item.nombre, item.variante, item.precio, item.isDocena, item.categoria, item.descripcion); };
-                
                 let descHtml = (cat === 'PROMOS' && item.descripcion) ? `<div class="desc-promo">${item.descripcion}</div>` : "";
                 btn.innerHTML = `<div class="nombre">${item.nombre}</div>${item.variante ? `<div class="variante">${item.variante}</div>` : ''}${descHtml}<div class="precio">$${formatPrice(item.precio)}</div>`;
                 grid.appendChild(btn);
@@ -315,7 +323,6 @@
                     container.innerHTML += `<div class="item-cart"><div><b>${item.nombre}</b><br><small style="color:#aaa;">${item.variante}</small></div><div class="item-cart-controles"><button class="btn-qty" onclick="cant(${i},-1)">-</button><b>${item.cantidad}</b><button class="btn-qty" onclick="cant(${i},1)">+</button></div><div>$${formatPrice(total)}</div></div>`;
                 });
             }
-            // Al actualizar carrito, se resetea el input de total al subtotal real.
             document.getElementById('total-display').value = subtotalReal; 
             calcularVuelto();
         }
@@ -347,10 +354,8 @@
             let nuevoTotal = subtotalReal;
             if(tipo === '%') nuevoTotal = subtotalReal - (subtotalReal * val / 100);
             else nuevoTotal = subtotalReal - val;
-            
             document.getElementById('total-display').value = Math.max(0, nuevoTotal);
-            cerrarDescuento();
-            calcularVuelto();
+            cerrarDescuento(); calcularVuelto();
         }
 
         // --- DOCENAS ---
@@ -388,82 +393,65 @@
             add(docenaActual.nombre, s, docenaActual.precio + docenaPrecioExtra, true, 'PROMOS', ""); cerrarModalDocena();
         }
 
-        // --- HISTORIAL / REIMPRESIÓN ---
+        // --- HISTORIAL / REIMPRESIÓN / WA ---
         function abrirHistorial() {
-            let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || [];
-            let cont = document.getElementById('lista-historial');
-            cont.innerHTML = '';
-            if(hist.length === 0) { cont.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:20px;">No hay tickets guardados</p>'; }
-            hist.forEach((t, i) => {
-                cont.innerHTML += `
-                <div style="background:#222; padding:15px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                    <div><b style="color:var(--primary); font-size:1.1rem;">Turno #${t.id}</b> - ${t.time}<br><span style="color:#ddd;">Cliente: ${t.cliente}</span><br><b>$${formatPrice(t.total)}</b></div>
-                    <button onclick="reimprimir(${i})" style="background:var(--primary); color:#000; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:1.2rem;"><i class="fas fa-print"></i></button>
-                </div>`;
-            });
+            let hist = []; try { hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || []; } catch(e) {}
+            let cont = document.getElementById('lista-historial'); cont.innerHTML = '';
+            if(hist.length === 0) { cont.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:20px;">No hay tickets guardados</p>'; } 
+            else {
+                let fechaHoy = new Date().toLocaleDateString('es-AR');
+                hist.forEach((t, i) => {
+                    let displayFecha = (t.fecha === fechaHoy) ? '<span style="color:#25D366; font-weight:bold;">HOY</span>' : `<span style="color:#FF3D00; font-weight:bold;">${t.fecha || 'Anterior'}</span>`;
+                    cont.innerHTML += `<div style="background:#222; padding:15px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;"><div><b style="color:var(--primary); font-size:1.1rem;">Turno #${t.id}</b> - ${displayFecha} ${t.time}<br><span style="color:#ddd;">Cliente: ${t.cliente}</span><br><b>$${formatPrice(t.total)}</b></div><button onclick="reimprimir(${i})" style="background:var(--primary); color:#000; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:1.2rem;"><i class="fas fa-print"></i></button></div>`;
+                });
+            }
             document.getElementById('historial-modal').style.display = 'flex';
         }
-        
         function cerrarHistorial() { document.getElementById('historial-modal').style.display = 'none'; }
+        function limpiarHistorial() { if(confirm("¿Borrar historial de esta PC?")) { localStorage.removeItem('ticketsPizzeria'); abrirHistorial(); } }
+        function reimprimir(i) { let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || []; if(hist[i]) { document.getElementById('ticket-impresion').innerHTML = hist[i].html; window.print(); } }
         
-        function reimprimir(i) {
-            let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || [];
-            if(hist[i]) {
-                document.getElementById('ticket-impresion').innerHTML = hist[i].html;
-                window.print();
-            }
+        function abrirModalWA() { document.getElementById('wa-modal').style.display = 'flex'; document.getElementById('wa-text').value = ''; document.getElementById('wa-text').focus(); }
+        function cerrarModalWA() { document.getElementById('wa-modal').style.display = 'none'; }
+        function imprimirWA() {
+            let texto = document.getElementById('wa-text').value.trim(); if (!texto) { alert("Tenés que pegar el texto del pedido primero."); return; }
+            document.getElementById('ticket-impresion').innerHTML = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center" style="margin-bottom: 10px;">PEDIDO APP / WA</div><div class="t-line"></div><div style="font-size:14px; line-height:1.4; padding: 5px 0;">${texto.replace(/\n/g, '<br>')}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px; font-weight:900; font-size:16px;">PARA COCINA / ENVÍO</div>`;
+            window.print(); cerrarModalWA();
         }
 
-        // --- COBRAR (IMPRESIÓN TURBO Y GUARDADO) ---
+        // --- COBRAR ---
         function cobrar() {
             let cli = document.getElementById('input-cliente').value || "Mostrador";
             let fec = new Date().toLocaleDateString('es-AR');
             let hor = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
             let numTurno = Math.floor(100+Math.random()*900);
-            
-            // TOMAR EL TOTAL DESDE EL INPUT (Por si hubo descuento o edición manual)
             let totalCargar = parseFloat(document.getElementById('total-display').value) || 0;
 
-            // 1. ARMAR EL TICKET 100% NEGRO (Para imprimir y guardar)
             let t = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center">Turno: #${numTurno}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${cli}</div><div class="t-line"></div>`;
             let detExcel = [], scriptCart = [];
             
             carrito.forEach(it => {
-                let v = '';
                 let cleanName = cleanEmojis(it.nombre);
                 let cleanVar = cleanEmojis(it.variante);
                 
-                if (it.isDocena && it.variante) { v = cleanVar.split('|').map(s => `<div class="t-var">- ${s.trim()}</div>`).join(''); } 
-                else if (it.variante) { v = `<div class="t-var">- ${cleanVar}</div>`; }
-                
+                let vTicket = '';
+                if (it.isDocena && it.variante) { vTicket = cleanVar.split('|').map(s => `<div class="t-var">- ${s.trim()}</div>`).join(''); } 
+                else if (it.variante) { vTicket = `<div class="t-var">- ${cleanVar}</div>`; }
                 let descHtml = (it.categoria === 'PROMOS' && it.descripcion) ? `<div class="t-desc">Inc: ${cleanEmojis(it.descripcion)}</div>` : "";
                 
-                t += `<div class="t-item"><div><b>${it.cantidad}x ${cleanName}</b>${v}${descHtml}</div><div>$${formatPrice(it.precio*it.cantidad)}</div></div>`;
+                t += `<div class="t-item"><div><b>${it.cantidad}x ${cleanName}</b>${vTicket}${descHtml}</div><div>$${formatPrice(it.precio*it.cantidad)}</div></div>`;
                 detExcel.push(`${it.cantidad}x ${cleanName} [${cleanVar}]`);
+
                 scriptCart.push({ name: cleanName, variant: cleanVar, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena });
             });
             
             t += `<div class="t-line"></div><div class="t-total" style="font-size:18px; font-weight:900; text-align:right;">TOTAL: $${formatPrice(totalCargar)}</div><div>Pago: ${metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px; font-weight:900; font-size:16px;">PARA COCINA - #${numTurno}</div>`;
             document.getElementById('ticket-impresion').innerHTML = t;
             
-            // 2. GUARDAR EN MEMORIA (LOCALSTORAGE - ÚLTIMOS 50)
-            let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || [];
-            hist.unshift({ id: numTurno, cliente: cli, total: totalCargar, time: hor, html: t });
-            if(hist.length > 50) hist.pop(); // Borra el más viejo si hay más de 50
-            localStorage.setItem('ticketsPizzeria', JSON.stringify(hist));
-
-            // 3. DISPARAR IMPRESIÓN INSTANTÁNEA
+            try { let hist = JSON.parse(localStorage.getItem('ticketsPizzeria')) || []; hist.unshift({ id: numTurno, cliente: cli, total: totalCargar, fecha: fec, time: hor, html: t }); if(hist.length > 50) hist.pop(); localStorage.setItem('ticketsPizzeria', JSON.stringify(hist)); } catch(e) {}
             window.print();
 
-            // 4. ENVIAR AL EXCEL EN SEGUNDO PLANO
-            fetch(urlRegistroVentas, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'text/plain' }, 
-                body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: totalCargar, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) 
-            });
-
-            // 5. LIMPIAR CAJA
+            fetch(urlRegistroVentas, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: metodoPago, total: totalCargar, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart }) });
             carrito = []; document.getElementById('paga-con').value = ''; document.getElementById('input-cliente').value = ''; update();
         }
     </script>
