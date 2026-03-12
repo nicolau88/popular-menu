@@ -415,7 +415,20 @@
         function cerrarModalWA() { document.getElementById('wa-modal').style.display = 'none'; }
         function imprimirWA() {
             let texto = document.getElementById('wa-text').value.trim(); if (!texto) { alert("Tenés que pegar el texto del pedido primero."); return; }
-            document.getElementById('ticket-impresion').innerHTML = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center" style="margin-bottom: 10px;">PEDIDO APP / WA</div><div class="t-line"></div><div style="font-size:14px; line-height:1.4; padding: 5px 0;">${texto.replace(/\n/g, '<br>')}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px; font-weight:900; font-size:16px;">PARA COCINA / ENVÍO</div>`;
+            
+            // 1. Transformar asteriscos de WhatsApp en texto Negrita grande
+            let htmlTexto = texto.replace(/\*(.*?)\*/g, '<b style="font-size:15px; text-transform:uppercase;">$1</b>');
+            
+            // 2. Reemplazar líneas de guiones por cortes de ticket reales
+            htmlTexto = htmlTexto.replace(/-{4,}/g, '</div><div class="t-line"></div><div style="font-size:14px; line-height:1.4; padding: 5px 0;">');
+            
+            // 3. Hacer un separador gigante donde empiece la sección de "PEDIDO" para la cocina
+            htmlTexto = htmlTexto.replace(/(<b>.*?PEDIDO.*?<\/b>)/i, '<div class="t-line" style="margin-top:15px; border-top: 3px dashed black;"></div><div class="t-center" style="font-size:20px; font-weight:900; margin:10px 0;">--- COCINA ---</div><div class="t-line" style="margin-bottom:10px; border-top: 3px dashed black;"></div>');
+            
+            // 4. Convertir saltos de línea normales
+            htmlTexto = htmlTexto.replace(/\n/g, '<br>');
+
+            document.getElementById('ticket-impresion').innerHTML = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center" style="margin-bottom: 10px;">PEDIDO APP / WA</div><div class="t-line"></div><div style="font-size:14px; line-height:1.4; padding: 5px 0;">${htmlTexto}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px; font-weight:900; font-size:16px;">FIN DEL TICKET</div>`;
             window.print(); cerrarModalWA();
         }
 
