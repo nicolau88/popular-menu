@@ -244,6 +244,11 @@
             data.forEach(item => {
                 if (!item.SECCION || !item.NOMBRE || normalize(item.SECCION) === 'CONFIGURACION') return;
                 
+                // --- FILTRO MAGICO DESDE EL EXCEL ---
+                // Busca la columna "SUCURSAL 2". Si dice "NO", saltea el producto y lo oculta en la caja.
+                let disponibleSuc2 = item['SUCURSAL 2'] || item['Sucursal 2'] || item['sucursal 2'] || item.SUCURSAL_2;
+                if (disponibleSuc2 && disponibleSuc2.toString().trim().toUpperCase() === 'NO') return;
+
                 // Ocultar Docena Especial del menu empanadas
                 if (item.NOMBRE.toUpperCase().includes('DOCENA') && item.NOMBRE.toUpperCase().includes('ESPECIAL')) return;
                 
