@@ -109,7 +109,6 @@
         <p><i class="far fa-clock"></i> Mar a Dom: 19:00hs a 23:00hs</p>
 
         <div class="social-bar">
-            <!-- BOTÓN WHATSAPP SUCURSAL 2 -->
             <a href="https://api.whatsapp.com/send?phone=5492214389280" class="social-btn s-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
             <a href="https://www.instagram.com/pizzeriapopular/" class="social-btn s-instagram" target="_blank"><i class="fab fa-instagram"></i></a>
         </div>
@@ -117,7 +116,6 @@
 
     <div class="sticky-nav">
         <a href="#empanadas" class="nav-pill">🥟 Empanadas</a>
-        <a href="#fatays" class="nav-pill">⭐ Fatays</a>
         <a href="#pizzas" class="nav-pill">🍕 Pizzas</a>
         <a href="#promos" class="nav-pill">🔥 Promos</a>
         <a href="#medias-pizzas" class="nav-pill">🌓 1/2 Pizzas</a>
@@ -134,9 +132,6 @@
         <div class="subsection-title" style="border-left-color: var(--accent);">PREMIUM</div>
         <div id="empanadas-premium-list" class="list-group"></div>
 
-        <h2 id="fatays" class="section-title"><i class="fas fa-star"></i> Fatays</h2>
-        <div id="fatays-list" class="list-group"></div>
-
         <h2 id="pizzas" class="section-title"><i class="fas fa-pizza-slice"></i> Nuestras Pizzas</h2>
         <div id="pizzas-list"></div>
         
@@ -147,10 +142,7 @@
         <div id="medias-pizzas-list"></div>
 
         <h2 id="bebidas" class="section-title"><i class="fas fa-glass-cheers"></i> Bebidas</h2>
-        <div class="subsection-title">SIN ALCOHOL</div>
-        <div id="bebidas-sin-alcohol-list" class="list-group"></div>
-        <div class="subsection-title">CERVEZAS</div>
-        <div id="cervezas-list" class="list-group"></div>
+        <div id="bebidas-list" class="list-group"></div>
     </div>
 
     <footer>
@@ -360,16 +352,19 @@
                     if (precioBaseClasica === 0) precioBaseClasica = cleanPrice(item.PRECIO_1);
                 }
 
-                // Buscador de categorías infalible (igual que en la Caja)
+                // Buscador de categorías
                 let targetId = null;
-                if (cleanSection.includes('MEDIA')) targetId = 'medias-pizzas-list';
+                
+                // Si es fatay la ignoramos para no crearla en el menú visual
+                if (cleanSection.includes('FATAY') || item.NOMBRE.toUpperCase().includes('FATAY')) {
+                    return;
+                }
+                else if (cleanSection.includes('MEDIA')) targetId = 'medias-pizzas-list';
                 else if (cleanSection.includes('PIZZA')) targetId = 'pizzas-list';
-                else if (cleanSection.includes('FATAY') || item.NOMBRE.toUpperCase().includes('FATAY')) targetId = 'fatays-list';
                 else if (cleanSection.includes('PREMIUM') || cleanSection.includes('ESPECIAL')) targetId = 'empanadas-premium-list';
                 else if (cleanSection.includes('CLASICA') || cleanSection.includes('EMPANADA')) targetId = 'empanadas-clasicas-list';
                 else if (cleanSection.includes('PROMO')) targetId = 'promos-list';
-                else if (cleanSection.includes('CERVEZA') || cleanSection.includes('ALCOHOL')) targetId = 'cervezas-list';
-                else if (cleanSection.includes('BEBIDA') || cleanSection.includes('GASEOSA')) targetId = 'bebidas-sin-alcohol-list';
+                else if (cleanSection.includes('CERVEZA') || cleanSection.includes('ALCOHOL') || cleanSection.includes('BEBIDA') || cleanSection.includes('GASEOSA')) targetId = 'bebidas-list';
 
                 if (!targetId) return; 
                 
