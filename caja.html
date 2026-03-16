@@ -145,7 +145,6 @@
         </div>
     </div>
 
-    <!-- MODALES DOCENAS, DESCUENTOS, HISTORIAL, WA -->
     <div id="modal-docena" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -223,7 +222,12 @@
         }
 
         function cargarMenu() {
-            fetch(csvUrl).then(r => r.text()).then(csvText => {
+            // Arreglo Caché
+            let urlActualizada = csvUrl + '&t=' + new Date().getTime();
+            
+            fetch(urlActualizada, { cache: 'no-store' })
+            .then(r => r.text())
+            .then(csvText => {
                 document.getElementById('loading').style.display = 'none';
                 Papa.parse(csvText, {
                     header: true, skipEmptyLines: true,
@@ -241,16 +245,27 @@
             data.forEach(item => {
                 if (!item.SECCION || !item.NOMBRE || normalize(item.SECCION) === 'CONFIGURACION') return;
                 
-                // Ocultar el botón de la Docena Especial del menú
+                // Filtro Sucursal 1
+                if (item['SUCURSAL 1'] && item['SUCURSAL 1'].trim().toUpperCase() !== 'SI') {
+                    return; 
+                }
+
+                // Ocultar Docena Especial del menú
                 if (item.NOMBRE.toUpperCase().includes('DOCENA') && item.NOMBRE.toUpperCase().includes('ESPECIAL')) return;
                 
                 let p1 = cleanPrice(item.PRECIO_1), p2 = cleanPrice(item.PRECIO_2), seccion = normalize(item.SECCION);
                 let isDocena = item.NOMBRE.toUpperCase().includes('DOCENA') && !item.NOMBRE.toUpperCase().includes('ESPECIAL');
                 let isFatay = item.NOMBRE.toUpperCase().includes('FATAY') || seccion.includes('FATAY');
 
+                // Esta línea memoriza silenciosamente el precio de la docena para el cálculo automático
                 if (isDocena && !isFatay && !promoDocenaItem) promoDocenaItem = { nombre: item.NOMBRE, precio: p1 };
                 if (seccion.includes('CLASICAS') && !isDocena) { dbClasicas.push(item); if (precioBaseClasica === 0) precioBaseClasica = p1; }
                 if (seccion.includes('PREMIUM') && !isDocena) dbPremium.push(item);
+
+                // 👇 NUEVO CAMBIO: Cortamos la carga acá si es la docena. 
+                // Como ya guardamos el precio arriba para el auto-calculador, esto solo evita que se dibuje el botón en el menú.
+                if (isDocena && !isFatay) return;
+                // 👆 --------------------------------------------------- 👆
 
                 let prodObj = { nombre: item.NOMBRE, descripcion: item.DESCRIPCION || "", variante: "", precio: p1, categoria: "", isDocena: isDocena };
 
