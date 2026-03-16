@@ -146,10 +146,7 @@
         <div id="medias-pizzas-list"></div>
 
         <h2 id="bebidas" class="section-title"><i class="fas fa-glass-cheers"></i> Bebidas</h2>
-        <div class="subsection-title">SIN ALCOHOL</div>
-        <div id="bebidas-sin-alcohol-list" class="list-group"></div>
-        <div class="subsection-title">CERVEZAS</div>
-        <div id="cervezas-list" class="list-group"></div>
+        <div id="bebidas-unificadas-list" class="list-group"></div>
     </div>
 
     <footer>
@@ -333,12 +330,20 @@
                 'empanadas-clasicas-list': ['EMPANADAS CLASICAS', 'EMPANADAS', 'CLASICAS', 'EMPANADAS_CLASICAS'],
                 'empanadas-premium-list': ['EMPANADAS PREMIUM', 'PREMIUM', 'EMPANADAS ESPECIALES', 'EMPANADAS_PREMIUM'],
                 'fatays-list': ['FATAYS', 'FATAY', 'FATAY (CARNE)'],
-                'bebidas-sin-alcohol-list': ['BEBIDAS SIN ALCOHOL', 'BEBIDAS', 'GASEOSAS', 'SIN ALCOHOL', 'BEBIDAS_SIN_ALCOHOL'],
-                'cervezas-list': ['CERVEZAS', 'CERVEZA', 'ALCOHOL']
+                // MODIFICACIÓN: Ambas categorías de bebidas van al mismo contenedor
+                'bebidas-unificadas-list': ['BEBIDAS SIN ALCOHOL', 'BEBIDAS', 'GASEOSAS', 'SIN ALCOHOL', 'BEBIDAS_SIN_ALCOHOL', 'CERVEZAS', 'CERVEZA', 'ALCOHOL']
             };
 
             items.forEach(item => {
                 if (!item.SECCION || !item.NOMBRE) return;
+
+                // --- CONTROL DE STOCK POR SUCURSAL 1 ---
+                // Si la columna existe y su valor es "NO" (ignora mayúsculas/espacios), saltamos este producto
+                if (item['SUCURSAL 1'] && normalize(item['SUCURSAL 1']) === 'NO') {
+                    return; 
+                }
+                // ----------------------------------------
+
                 const cleanSection = normalize(item.SECCION).replace(/_/g, ' ');
                 const isDocena = item.NOMBRE.toUpperCase().includes('DOCENA');
 
