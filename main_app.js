@@ -573,15 +573,20 @@ class PizzeriaApp {
             carrito: carritoModificado 
         };
 
-        // Ensuring the fetch gets sent *before* redirecting
+        // Fire-and-forget con keepalive: asegura envío en 2do plano sin freezar la pantalla
         try {
-            // Await execution block to guarantee dispatch before tab switches
-            await fetch(CONST_URL_REGISTRO, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+            fetch(CONST_URL_REGISTRO, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                keepalive: true, 
+                headers: { 'Content-Type': 'text/plain' }, 
+                body: JSON.stringify(payload) 
+            });
         } catch(e) {
             console.error("Fallo menor de registro en sheet. Continuará el redirect.", e);
         }
 
-        // Delay to make it more realistic visually, then WhatsApp open
+        // Abre WhatsApp casi al instante
         setTimeout(() => {
             const urlWhatsApp = `https://api.whatsapp.com/send?phone=${CONST_WHATSAPP_NUMBER}&text=${encodeURIComponent(texto)}`;
             window.location.href = urlWhatsApp; 
@@ -589,7 +594,7 @@ class PizzeriaApp {
             // Revert changes on the button 
             btnSubmit.innerHTML = '<i class="fab fa-whatsapp"></i> Enviado con Éxito';
             setTimeout(() => { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i class="fab fa-whatsapp"></i> Enviar Pedido por WhatsApp'; }, 3000);
-        }, 800);
+        }, 150);
     }
 }
 
