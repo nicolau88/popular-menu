@@ -507,6 +507,7 @@ class PizzeriaPOS {
             // Agregar ítem base al scriptCart (si es Promo, etiquetarla para Excel)
             let clone = { name: cleanName, variant: cleanVar, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena };
             if (it.categoria === 'PROMOS' && !it.isDocena) clone.categoria = "Promo";
+            else if (it.categoria === 'EXTRAS') clone.categoria = "Extra";
             scriptCart.push(clone);
 
             // Desglose de pizzas de Promo para control de stock
