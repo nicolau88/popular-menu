@@ -1,0 +1,160 @@
+:root {
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --accent-yellow: #feca00;
+    --accent-red: #e31837;
+    --font-main: 'Oswald', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    overflow: hidden; /* Las TVs no deben scrollear */
+    background-image: radial-gradient(circle, #2a2a2a 0%, #151515 100%);
+}
+
+.tv-container {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 100px;
+    transform-origin: top left;
+}
+
+/* Decoraciones */
+.bg-deco {
+    position: absolute;
+    opacity: 0.1;
+    font-size: 15rem;
+    pointer-events: none;
+    z-index: 0;
+}
+.deco-topLeft { top: -20px; left: -20px; transform: rotate(-15deg); }
+.deco-bottomRight { bottom: 20px; right: 20px; transform: rotate(15deg); }
+.deco-bottomLeft { bottom: 60px; left: 100px; transform: rotate(-25deg); }
+
+/* Header */
+.tv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    z-index: 1;
+}
+
+.header-empty {
+    flex: 1;
+}
+
+.logo-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.logo {
+    height: 140px;
+    width: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.col-headers {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+    color: var(--accent-yellow);
+    font-size: 2.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+/* Lista de Pizzas */
+.tv-lista {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    z-index: 1;
+    margin-bottom: 20px;
+}
+
+.item-row {
+    display: flex;
+    align-items: baseline;
+    font-size: 3.5rem;
+    letter-spacing: 2px;
+}
+
+.item-name {
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 500;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    white-space: nowrap;
+}
+
+.item-dots {
+    flex: 1;
+    border-bottom: 3px dashed rgba(255, 255, 255, 0.4);
+    margin: 0 20px;
+    position: relative;
+    top: -15px;
+}
+
+.item-prices {
+    display: flex;
+    gap: 50px;
+    font-weight: 500;
+    color: var(--accent-yellow);
+}
+
+.price-box {
+    width: 180px;
+    text-align: right;
+}
+
+/* Footer Leyenda */
+.tv-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    margin-top: auto;
+    padding-bottom: 20px;
+}
+
+.footer-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icon-pizza {
+    font-size: 4rem;
+}
+
+.text-horneadas {
+    color: var(--accent-yellow);
+    font-size: 3.5rem;
+    font-weight: 700;
+}
+
+.text-precio {
+    color: var(--accent-yellow);
+    font-size: 3.5rem;
+    font-weight: 700;
+}

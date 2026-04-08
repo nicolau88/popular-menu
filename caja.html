@@ -33,6 +33,10 @@
                 </div>
             </div>
             
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="buscador-productos" class="input-caja" placeholder="🔍 Buscar producto por nombre o variante..." style="width: 100%; text-align: left; background: #222;">
+            </div>
+            
             <div class="filtros" id="contenedor-filtros">
                 <button class="btn-filtro active" data-categoria="PIZZAS_HORNEADAS">Pizzas Horneadas</button>
                 <button class="btn-filtro" data-categoria="PIZZAS_HORNEAR">Pizzas P/Hornear</button>
@@ -68,18 +72,38 @@
                 </div>
 
                 <div class="opciones-pago" style="display:flex; gap:5px; margin-bottom:10px;" id="contenedor-pagos">
-                    <button class="btn-pago active" data-metodo="Efectivo">Efectivo</button>
+                    <button class="btn-pago" data-metodo="Efectivo">Efectivo</button>
                     <button class="btn-pago" data-metodo="Transferencia">Transf.</button>
                     <button class="btn-pago" data-metodo="Deb/Cred">Deb/Cred</button>
                 </div>
 
-                <div id="box-vuelto">
+                <div id="box-vuelto" style="opacity: 0.2;">
                     <input type="number" id="paga-con" class="input-caja" placeholder="Paga con: $">
                     <div class="vuelto-display"><span>Vuelto:</span><strong id="display-vuelto">$0</strong></div>
                 </div>
 
-                <input type="text" id="input-cliente" class="input-caja" placeholder="Nombre del Cliente" style="margin-top:10px; text-align:left;">
-                <button class="btn-cobrar" id="btn-cobrar" disabled>COBRAR E IMPRIMIR</button>
+                <div style="display:flex; gap:10px; margin-top:15px; margin-bottom: 10px;">
+                    <button id="btn-tipo-mostrador" class="btn-filtro active" style="flex:1; padding:10px;">Mostrador</button>
+                    <button id="btn-tipo-delivery" class="btn-filtro" style="flex:1; padding:10px;">Delivery</button>
+                </div>
+
+                <input type="text" id="input-cliente" class="input-caja" placeholder="Nombre del Cliente" style="text-align:left;">
+
+                <div id="datos-delivery" style="display:none; margin-top:10px; gap:8px; flex-direction:column;">
+                    <input type="text" id="input-telefono" class="input-caja" placeholder="Teléfono" style="text-align:left;">
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="input-calle" class="input-caja" placeholder="Calle" style="flex:2; text-align:left;">
+                        <input type="text" id="input-numero" class="input-caja" placeholder="Número" style="flex:1; text-align:left;">
+                    </div>
+                    <input type="text" id="input-entre-calles" class="input-caja" placeholder="Entre calles" style="text-align:left;">
+                    <input type="text" id="input-depto" class="input-caja" placeholder="Depto / Piso / Obs" style="text-align:left;">
+                    <div style="display:flex; align-items:center; gap:10px; background:#222; padding:10px; border-radius:6px; border:1px solid #444;">
+                        <span style="color:#aaa; font-family:'Roboto'; font-size:0.9rem;">Costo Envío: $</span>
+                        <input type="number" id="input-envio" class="input-caja" placeholder="0" style="flex:1; margin:0; padding:5px 10px; text-align:right;">
+                    </div>
+                </div>
+
+                <button class="btn-cobrar" id="btn-cobrar" disabled style="margin-top:15px;">COBRAR E IMPRIMIR</button>
             </div>
         </div>
     </div>

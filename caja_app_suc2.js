@@ -9,7 +9,8 @@ class PizzeriaPOS {
         this.catalogo = [];
         this.carrito = [];
         this.subtotalReal = 0;
-        this.metodoPago = 'Efectivo';
+        this.metodoPago = null;
+        this.tipoEntrega = 'Mostrador';
         
         this.dbClasicas = [];
         this.dbPremium = [];
@@ -72,6 +73,12 @@ class PizzeriaPOS {
         document.getElementById('btn-cerrar-historial').addEventListener('click', () => document.getElementById('historial-modal').style.display = 'none');
         document.getElementById('btn-limpiar-historial').addEventListener('click', () => this.limpiarHistorial());
         
+        // Buscador
+        const buscador = document.getElementById('buscador-productos');
+        if (buscador) {
+            buscador.addEventListener('input', (e) => this.buscarProducto(e.target.value));
+        }
+
         // Filtros Menu
         const btnFiltros = document.querySelectorAll('.btn-filtro');
         btnFiltros.forEach(btn => {
@@ -93,6 +100,11 @@ class PizzeriaPOS {
         document.getElementById('btn-desc-porcentaje').addEventListener('click', () => this.aplicarDescuento('%'));
         document.getElementById('btn-desc-monto').addEventListener('click', () => this.aplicarDescuento('$'));
         
+        // Tipo de Entrega
+        document.getElementById('btn-tipo-mostrador').addEventListener('click', () => this.setTipoEntrega('Mostrador'));
+        document.getElementById('btn-tipo-delivery').addEventListener('click', () => this.setTipoEntrega('Delivery'));
+        document.getElementById('input-envio').addEventListener('input', () => this.updateCarritoUI());
+
         // Total Inputs
         document.getElementById('total-display').addEventListener('input', () => this.calcularVuelto());
         document.getElementById('paga-con').addEventListener('input', () => this.calcularVuelto());
@@ -209,10 +221,45 @@ class PizzeriaPOS {
         document.querySelectorAll('#contenedor-filtros .btn-filtro').forEach(b => b.classList.remove('active'));
         if(btnElement) btnElement.classList.add('active');
         
+        // Limpiar buscador si venimos de un clic de categoria
+        const buscador = document.getElementById('buscador-productos');
+        if (buscador && btnElement) buscador.value = '';
+
+        const resultados = this.catalogo.filter(i => i.categoria === categoria);
+        this.renderizarGrilla(resultados, categoria);
+    }
+
+    buscarProducto(termino) {
+        document.querySelectorAll('#contenedor-filtros .btn-filtro').forEach(b => b.classList.remove('active'));
+        
+        let terminoNormalizado = this.normalize(termino);
+        
+        if (!terminoNormalizado) {
+            // Si se borra la busqueda, volvemos a mostrar la categoria por defecto
+            const defaultBtn = document.querySelector('.btn-filtro[data-categoria="PIZZAS_HORNEADAS"]');
+            this.filtrarCatalogo('PIZZAS_HORNEADAS', defaultBtn);
+            return;
+        }
+
+        const resultados = this.catalogo.filter(item => 
+            this.normalize(item.nombre).includes(terminoNormalizado) || 
+            this.normalize(item.variante).includes(terminoNormalizado) ||
+            this.normalize(item.descripcion).includes(terminoNormalizado)
+        );
+        
+        this.renderizarGrilla(resultados, 'BUSQUEDA');
+    }
+
+    renderizarGrilla(items, contextoCategoria) {
         const grid = document.getElementById('grid-productos'); 
         grid.innerHTML = '';
         
-        this.catalogo.filter(i => i.categoria === categoria).forEach(item => {
+        if (items.length === 0) {
+            grid.innerHTML = '<p style="color:#aaa; text-align:center; grid-column:1/-1; padding:20px;">No se encontraron productos.</p>';
+            return;
+        }
+
+        items.forEach(item => {
             let btn = document.createElement('button'); 
             btn.className = 'btn-producto';
             
@@ -229,7 +276,7 @@ class PizzeriaPOS {
                 btn.appendChild(varDiv);
             }
 
-            if(categoria === 'PROMOS' && item.descripcion) {
+            if((contextoCategoria === 'PROMOS' || contextoCategoria === 'BUSQUEDA') && item.descripcion) {
                 let descDiv = document.createElement('div');
                 descDiv.className = 'desc-promo';
                 descDiv.textContent = item.descripcion;
@@ -244,6 +291,13 @@ class PizzeriaPOS {
             btn.addEventListener('click', () => { 
                 if (item.isDocena && item.categoria !== 'FATAYS') this.abrirModalDocena(item); 
                 else this.agregarAlCarrito(item.nombre, item.variante, item.precio, item.isDocena, item.categoria, item.descripcion); 
+                
+                // Limpiar busqueda al seleccionar producto opcionalmente
+                const buscador = document.getElementById('buscador-productos');
+                if (buscador && buscador.value !== '') {
+                    buscador.value = '';
+                    this.buscarProducto(''); // Volver
+                }
             });
             
             grid.appendChild(btn);
@@ -308,6 +362,14 @@ class PizzeriaPOS {
         this.updateCarritoUI();
     }
 
+    setTipoEntrega(t) {
+        this.tipoEntrega = t;
+        document.getElementById('btn-tipo-mostrador').classList.toggle('active', t === 'Mostrador');
+        document.getElementById('btn-tipo-delivery').classList.toggle('active', t === 'Delivery');
+        document.getElementById('datos-delivery').style.display = t === 'Delivery' ? 'flex' : 'none';
+        this.updateCarritoUI();
+    }
+
     updateCarritoUI() {
         const container = document.getElementById('cart-items'); 
         this.subtotalReal = 0;
@@ -350,7 +412,8 @@ class PizzeriaPOS {
                 container.appendChild(cartItem);
             });
         }
-        document.getElementById('total-display').value = this.subtotalReal; 
+        let envioFloat = this.tipoEntrega === 'Delivery' ? (parseFloat(document.getElementById('input-envio').value) || 0) : 0;
+        document.getElementById('total-display').value = this.subtotalReal + envioFloat; 
         this.calcularVuelto();
     }
 
@@ -380,7 +443,8 @@ class PizzeriaPOS {
         if(tipo === '%') nuevoTotal = this.subtotalReal - (this.subtotalReal * val / 100);
         else nuevoTotal = this.subtotalReal - val;
         
-        document.getElementById('total-display').value = Math.max(0, nuevoTotal);
+        let envioFloat = this.tipoEntrega === 'Delivery' ? (parseFloat(document.getElementById('input-envio').value) || 0) : 0;
+        document.getElementById('total-display').value = Math.max(0, nuevoTotal) + envioFloat;
         document.getElementById('desc-modal').style.display = 'none';
         this.calcularVuelto();
     }
@@ -483,13 +547,43 @@ class PizzeriaPOS {
 
     // --- COBRO y TICKETS Offline/Online Queue ---
     cobrar() {
-        let cli = document.getElementById('input-cliente').value || "Mostrador";
+        if (!this.metodoPago) {
+            alert("⚠️ Seleccioná un método de pago antes de cobrar e imprimir.");
+            return;
+        }
+
+        let cli = document.getElementById('input-cliente').value || (this.tipoEntrega === "Delivery" ? "Delivery" : "Mostrador");
         let fec = new Date().toLocaleDateString('es-AR');
         let hor = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
         let numTurno = Math.floor(100+Math.random()*900);
         let totalCargar = parseFloat(document.getElementById('total-display').value) || 0;
 
-        let t = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center">Turno: #${numTurno}</div><div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${this.sanitizeForHTML(cli)}</div><div class="t-line"></div>`;
+        let telefono = "-";
+        let direccion = "Local";
+        let costoEnvio = 0;
+        let htmlDelivery = "";
+        let tituloTicket = `Turno: #${numTurno}`;
+
+        if (this.tipoEntrega === "Delivery") {
+            telefono = document.getElementById('input-telefono').value.trim() || "-";
+            let calle = document.getElementById('input-calle').value.trim();
+            let num = document.getElementById('input-numero').value.trim();
+            let entre = document.getElementById('input-entre-calles').value.trim();
+            let depto = document.getElementById('input-depto').value.trim();
+            costoEnvio = parseFloat(document.getElementById('input-envio').value) || 0;
+            
+            let dirParts = [];
+            if (calle) dirParts.push(calle);
+            if (num) dirParts.push(num);
+            if (entre) dirParts.push(`e/ ${entre}`);
+            if (depto) dirParts.push(depto);
+            
+            direccion = dirParts.length > 0 ? dirParts.join(" ") : "Sin dirección";
+            tituloTicket = "DELIVERY";
+            htmlDelivery = `<div>Tel: ${this.sanitizeForHTML(telefono)}</div><div>Dir: ${this.sanitizeForHTML(direccion)}</div>`;
+        }
+
+        let t = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center" style="${this.tipoEntrega === 'Delivery' ? 'font-size:1.5rem; font-weight:bold; letter-spacing:2px;' : ''}">${tituloTicket}</div>${this.tipoEntrega === 'Mostrador' ? '' : `<div class="t-center">Turno #${numTurno}</div>`}<div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${this.sanitizeForHTML(cli)}</div>${htmlDelivery}<div class="t-line"></div>`;
         let detExcel = [], scriptCart = [];
         
         this.carrito.forEach(it => {
@@ -531,6 +625,11 @@ class PizzeriaPOS {
             }
         });
         
+        if (costoEnvio > 0) {
+            t += `<div class="t-item"><div><b>Costo de Envío</b></div><div>$${this.formatPrice(costoEnvio)}</div></div>`;
+            scriptCart.push({ name: "Costo de Envío", price: costoEnvio, variant: "", quantity: 1, isDocena: false, categoria: "Extra" });
+        }
+
         t += `<div class="t-line"></div><div class="t-total" style="font-size:18px; font-weight:900; text-align:right;">TOTAL: $${this.formatPrice(totalCargar)}</div><div>Pago: ${this.metodoPago}</div><div class="t-line"></div><div class="t-center" style="margin-top:10px; font-weight:900; font-size:16px;">PARA COCINA - #${numTurno}</div>`;
         document.getElementById('ticket-impresion').innerHTML = t;
         
@@ -545,7 +644,7 @@ class PizzeriaPOS {
         window.print();
 
         // Enqueue Fetch request
-        let ventaData = { fecha: fec, hora: hor, cliente: cli, telefono: "-", tipoEntrega: "Mostrador", direccion: "Local", pago: this.metodoPago, total: totalCargar, envio: 0, detalleResumen: detExcel.join(' + '), carrito: scriptCart };
+        let ventaData = { fecha: fec, hora: hor, cliente: cli, telefono: telefono, tipoEntrega: this.tipoEntrega, direccion: direccion, pago: this.metodoPago, total: totalCargar, envio: costoEnvio, detalleResumen: detExcel.join(' + '), carrito: scriptCart };
         
         this.encolarVenta(ventaData);
         
@@ -553,6 +652,21 @@ class PizzeriaPOS {
         this.carrito = []; 
         document.getElementById('paga-con').value = ''; 
         document.getElementById('input-cliente').value = ''; 
+        
+        // Reset metodo pago
+        this.metodoPago = null;
+        document.querySelectorAll('.btn-pago').forEach(b => b.classList.remove('active'));
+        document.getElementById('box-vuelto').style.opacity = '0.2';
+        
+        if (this.tipoEntrega === "Delivery") {
+            document.getElementById('input-telefono').value = '';
+            document.getElementById('input-calle').value = '';
+            document.getElementById('input-numero').value = '';
+            document.getElementById('input-entre-calles').value = '';
+            document.getElementById('input-depto').value = '';
+            document.getElementById('input-envio').value = '';
+            this.setTipoEntrega('Mostrador');
+        }
         this.updateCarritoUI();
         this.mostrarToast("✅ Venta registrada");
     }
