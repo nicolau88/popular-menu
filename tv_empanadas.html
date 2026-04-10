@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartelera Empanadas - Pizzería Popular</title>
+    <link rel="stylesheet" href="tv_empanadas_styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+    <div id="loading" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#111; color:#fff; display:flex; justify-content:center; align-items:center; z-index:9999; font-size:4rem; font-family:'Oswald', sans-serif;">
+        Cargando Precios...
+    </div>
+
+    <div class="tv-container">
+        <!-- DECORACIONES DE FONDO -->
+        <div class="bg-deco deco-topLeft">🥟</div>
+        <div class="bg-deco deco-midRight">🌶️</div>
+        <div class="bg-deco deco-bottomRight">🍷</div>
+        <div class="bg-deco deco-bottomLeft">🧅</div>
+
+        <!-- HEADER -->
+        <header class="tv-header">
+            <img src="logo_nuevo.png" alt="Pizzeria Popular" class="logo">
+        </header>
+
+        <!-- SECCION CLASICAS -->
+        <div class="section-header" id="header-clasicas">
+            <h2 class="section-title">CLÁSICAS</h2>
+            <div class="section-price-badge" id="price-clasicas">-</div>
+        </div>
+        <main class="tv-lista" id="list-clasicas">
+            <!-- Se inyectarán desde js -->
+        </main>
+
+        <!-- SECCION ESPECIALES -->
+        <div class="section-header" id="header-especiales">
+            <h2 class="section-title">PREMIUM</h2>
+            <div class="section-price-badge" id="price-especiales">-</div>
+        </div>
+        <main class="tv-lista" id="list-especiales">
+            <!-- Se inyectarán desde js -->
+        </main>
+
+        <!-- SECCION FATAY -->
+        <div class="section-header" id="header-fatay">
+            <h2 class="section-title">FATAY</h2>
+            <div class="section-price-badge" id="price-fatay">-</div>
+        </div>
+        <main class="tv-lista" id="list-fatay">
+            <!-- Se inyectarán desde js -->
+        </main>
+
+        <!-- FOOTER / PROMOS -->
+        <footer class="tv-footer" id="promo-container">
+            <!-- Se inyectarán desde js -->
+        </footer>
+    </div>
+
+    <script src="tv_empanadas_app.js"></script>
+</body>
+</html>
