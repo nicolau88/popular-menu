@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro de Gastos | Pizzería Popular</title>
+    
+    <!-- Fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 para alertas bonitas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Estilos Propios -->
+    <link rel="stylesheet" href="gastos_styles.css?v=1">
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>PIZZERÍA POPULAR</h1>
+        <h2>Registro de Gastos</h2>
+    </header>
+
+    <main class="app-container">
+        <form id="form-gastos" class="gastos-form">
+            
+            <div class="form-group">
+                <label for="fecha"><i class="fas fa-calendar-alt"></i> Fecha</label>
+                <input type="date" id="fecha" name="fecha" required>
+            </div>
+
+            <div class="form-group">
+                <label for="descripcion"><i class="fas fa-align-left"></i> Descripción</label>
+                <input type="text" id="descripcion" name="descripcion" placeholder="Ej: Mercadería, luz, etc." required>
+            </div>
+
+            <div class="form-group">
+                <label for="monto"><i class="fas fa-dollar-sign"></i> Monto ($)</label>
+                <input type="number" id="monto" name="monto" min="0" step="0.01" placeholder="Ej: 50000" required>
+            </div>
+
+            <div class="form-group">
+                <label for="categoria"><i class="fas fa-tags"></i> Categoría</label>
+                <select id="categoria" name="categoria" required>
+                    <option value="" disabled selected>Selecciona una categoría...</option>
+                    <option value="Sueldos">Sueldos</option>
+                    <option value="Servicios y Alquiler">Servicios y Alquiler</option>
+                    <option value="Materia Prima">Materia Prima</option>
+                    <option value="Otros / Varios">Otros / Varios</option>
+                    <option value="Vehículos">Vehículos</option>
+                    <option value="Insumos y Limpieza">Insumos y Limpieza</option>
+                    <option value="Bebidas">Bebidas</option>
+                    <option value="Retiros">Retiros</option>
+                    <option value="Mantenimiento y Equipamiento">Mantenimiento y Equipamiento</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="medioPago"><i class="fas fa-wallet"></i> Medio de Pago</label>
+                <select id="medioPago" name="medioPago" required>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Efectivo">Efectivo</option>
+                </select>
+            </div>
+
+            <div class="form-group file-upload-wrapper">
+                <label class="file-upload-label">
+                    <i class="fas fa-camera"></i> Adjuntar Comprobante
+                    <input type="file" id="comprobante" name="comprobante" accept="image/*" capture="environment">
+                </label>
+                <div id="file-name" class="file-name">Ningún archivo seleccionado</div>
+                <img id="image-preview" class="image-preview" src="" alt="Vista previa del comprobante" style="display: none;">
+            </div>
+
+            <button type="submit" id="btn-submit" class="btn-submit">
+                <i class="fas fa-cloud-upload-alt"></i> GUARDAR GASTO
+            </button>
+        </form>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Guardando gasto y subiendo comprobante...</p>
+    </div>
+
+    <!-- Script de la App -->
+    <script src="gastos_app.js?v=1"></script>
+</body>
+</html>
