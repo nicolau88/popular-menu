@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- CONFIGURACIÓN ---
     // AQUI SE DEBE PEGAR LA URL DE LA APLICACIÓN WEB DE GOOGLE APPS SCRIPT
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8ErghNC3vClbRG8BvqjDeM2ng4NGurNqIetTRZRiT_M-kM6ugsqFSSOGGVVtBRY8l/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgnUNXEoBDhJkAPM-OosjOTixZ6Hc7jM199ZVOqq4R9cIyTPX3SirCRXghKywhBZ8n/exec';
     // ---------------------
 
     const form = document.getElementById('form-gastos');
