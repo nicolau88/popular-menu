@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- CONFIGURACIÓN ---
     // AQUI SE DEBE PEGAR LA URL DE LA APLICACIÓN WEB DE GOOGLE APPS SCRIPT
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgnUNXEoBDhJkAPM-OosjOTixZ6Hc7jM199ZVOqq4R9cIyTPX3SirCRXghKywhBZ8n/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyjou5AZ40-XpSjVWvzAFdtsWb25WQNiML9Ds73fiGWm2EJVCvhXvEqOTtyx2iMv-o2/exec';
     // ---------------------
 
     const form = document.getElementById('form-gastos');
@@ -11,6 +11,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileNameDisplay = document.getElementById('file-name');
     const imagePreview = document.getElementById('image-preview');
     const loadingOverlay = document.getElementById('loading-overlay');
+
+    // 0. Obtener categorías dinámicamente
+    async function fetchCategorias() {
+        const select = document.getElementById('categoria');
+        try {
+            const response = await fetch(`${SCRIPT_URL}?action=getCategorias`);
+            const result = await response.json();
+            if (result.status === 'success') {
+                select.innerHTML = '<option value="" disabled selected>Selecciona una categoría...</option>';
+                result.categorias.forEach(cat => {
+                    if (cat.trim() !== '') {
+                        select.innerHTML += `<option value="${cat}">${cat}</option>`;
+                    }
+                });
+            } else {
+                select.innerHTML = '<option value="" disabled selected>Error cargando categorías</option>';
+            }
+        } catch (error) {
+            console.error("Error cargando categorías:", error);
+            select.innerHTML = '<option value="" disabled selected>Error cargando categorías</option>';
+        }
+    }
+
+    // Llamamos a la función si la URL ya está configurada
+    if (SCRIPT_URL && SCRIPT_URL !== 'AQUI_PEGAREMOS_LA_URL_DEL_SCRIPT' && SCRIPT_URL !== '') {
+        fetchCategorias();
+    }
 
     // 1. Establecer la fecha actual por defecto
     const hoy = new Date();
