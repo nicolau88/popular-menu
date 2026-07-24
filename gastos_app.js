@@ -6,11 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------------------
 
     const form = document.getElementById('form-gastos');
-    const inputFecha = document.getElementById('fecha');
-    const fileInput = document.getElementById('comprobante');
+    const fileCamara = document.getElementById('comprobante-camara');
+    const fileGaleria = document.getElementById('comprobante-galeria');
     const fileNameDisplay = document.getElementById('file-name');
     const imagePreview = document.getElementById('image-preview');
     const loadingOverlay = document.getElementById('loading-overlay');
+    const inputFecha = document.getElementById('fecha');
+
+    let selectedFile = null; // Guardará el archivo elegido ya sea de cámara o galeríamente
 
     // 0. Obtener categorías dinámicamente
     async function fetchCategorias() {
@@ -46,9 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
     inputFecha.value = hoy.toISOString().split('T')[0];
 
     // 2. Manejar la selección de imagen (Vista previa)
-    fileInput.addEventListener('change', function(e) {
+    function handleFile(e) {
         const file = e.target.files[0];
         if (file) {
+            selectedFile = file; // Guardar globalmente
             fileNameDisplay.textContent = file.name;
             
             const reader = new FileReader();
@@ -58,11 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             reader.readAsDataURL(file);
         } else {
-            fileNameDisplay.textContent = 'Ningún archivo seleccionado';
-            imagePreview.style.display = 'none';
-            imagePreview.src = '';
+            // Si canceló la selección de este input, mantenemos el anterior si existe
+            if (!selectedFile) {
+                fileNameDisplay.textContent = 'Ningún archivo seleccionado';
+                imagePreview.style.display = 'none';
+            }
         }
-    });
+    }
+
+    fileCamara.addEventListener('change', handleFile);
+    fileGaleria.addEventListener('change', handleFile);
 
     // 3. Función para comprimir la imagen usando Canvas
     async function comprimirImagen(file) {
@@ -132,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const monto = document.getElementById('monto').value;
         const categoria = document.getElementById('categoria').value;
         const medioPago = document.getElementById('medioPago').value;
-        const file = fileInput.files[0];
+        const file = selectedFile; // Usar el archivo globalmente guardado
 
         // Validaciones extra
         if (!file) {

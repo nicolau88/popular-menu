@@ -55,10 +55,16 @@
             </div>
 
             <div class="form-group file-upload-wrapper">
-                <label class="file-upload-label">
-                    <i class="fas fa-camera"></i> Adjuntar Comprobante
-                    <input type="file" id="comprobante" name="comprobante" accept="image/*">
-                </label>
+                <div style="display: flex; gap: 10px;">
+                    <label class="file-upload-label" style="flex: 1; padding: 10px; font-size: 0.9rem;">
+                        <i class="fas fa-camera"></i> Tomar Foto
+                        <input type="file" id="comprobante-camara" accept="image/*" capture="environment">
+                    </label>
+                    <label class="file-upload-label" style="flex: 1; background-color: #555; padding: 10px; font-size: 0.9rem;">
+                        <i class="fas fa-image"></i> Galería
+                        <input type="file" id="comprobante-galeria" accept="image/*">
+                    </label>
+                </div>
                 <div id="file-name" class="file-name">Ningún archivo seleccionado</div>
                 <img id="image-preview" class="image-preview" src="" alt="Vista previa del comprobante" style="display: none;">
             </div>
