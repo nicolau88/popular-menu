@@ -674,11 +674,7 @@ class PizzeriaApp {
         if(entrega === 'delivery') {
             texto += `*TIPO DE ENTREGA:* Delivery (${this.datosZonaEnvio.zonaNombre})\n*DIRECCIÓN:* ${direccion}\n*ENTRE CALLES:* ${entreCalles}\n`;
             if(depto) texto += `*DEPTO/PISO:* ${depto}\n`;
-            if(this.datosZonaEnvio?.lat && this.datosZonaEnvio?.lng) {
-                texto += `*UBICACIÓN MAPA:* https://www.google.com/maps?q=${this.datosZonaEnvio.lat},${this.datosZonaEnvio.lng}\n\n`;
-            } else {
-                texto += `\n`;
-            }
+            texto += `\n`;
         } else { texto += `*TIPO DE ENTREGA:* Retira por el local\n\n`; }
         
         texto += `*HORARIO:* ${tipoHorario === 'Lo antes posible' ? 'Lo antes posible' : `${horaExacta} hs`}\n`;
@@ -771,6 +767,10 @@ class PizzeriaApp {
             }
         });
 
+        const linkMapa = (entrega === 'delivery' && this.datosZonaEnvio?.lat && this.datosZonaEnvio?.lng)
+            ? `https://www.google.com/maps?q=${this.datosZonaEnvio.lat},${this.datosZonaEnvio.lng}`
+            : '-';
+
         let payload = {
             fecha: fechaActual, hora: horaActual,
             cliente: nombre, telefono: telefono,
@@ -779,6 +779,7 @@ class PizzeriaApp {
             pago: pago, total: totalFinal,
             envio: entrega === 'delivery' ? this.costoDeEnvio : 0,
             detalleResumen: detalleParaExcel.join(' + '),
+            linkMapa: linkMapa,
             carrito: carritoModificado 
         };
 

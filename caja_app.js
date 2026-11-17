@@ -529,6 +529,7 @@ class PizzeriaPOS {
                 total: subtotal + costoEnvio,
                 envio: costoEnvio,
                 detalleResumen: `[TEST MASIVO AUDITORIA: ${carrito.length} filas en Productos]`,
+                linkMapa: "https://www.google.com/maps?q=-34.927015,-57.937155",
                 carrito: carrito
             };
         };
@@ -936,6 +937,7 @@ class PizzeriaPOS {
         let telefono = "-";
         let direccion = "Local";
         let costoEnvio = 0;
+        let linkMapa = "-";
         let htmlDelivery = "";
         let tituloTicket = `Turno: #${numTurno}`;
 
@@ -954,6 +956,14 @@ class PizzeriaPOS {
             if (depto) dirParts.push(depto);
             
             direccion = dirParts.length > 0 ? dirParts.join(" ") : "Sin dirección";
+            if (window.GestorZonasEnvio && calle) {
+                const coords = window.GestorZonasEnvio.geocodificarDireccionLaPlataLocal(`${calle} ${num}`, entre);
+                if (coords) {
+                    linkMapa = `https://www.google.com/maps?q=${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`;
+                } else {
+                    linkMapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(calle + ' ' + num + ', La Plata')}`;
+                }
+            }
             tituloTicket = "DELIVERY";
             htmlDelivery = `<div>Tel: ${this.sanitizeForHTML(telefono)}</div><div>Dir: ${this.sanitizeForHTML(direccion)}</div>`;
             this.guardarClienteEnAgenda(telefono, cli, calle, num, entre, depto, this.zonaEnvioActiva, costoEnvio);
@@ -1021,7 +1031,7 @@ class PizzeriaPOS {
         window.print();
 
         // Enqueue Fetch request
-        let ventaData = { fecha: fec, hora: hor, cliente: cli, telefono: telefono, tipoEntrega: this.tipoEntrega, direccion: direccion, pago: this.metodoPago, total: totalCargar, envio: costoEnvio, detalleResumen: detExcel.join(' + '), carrito: scriptCart };
+        let ventaData = { fecha: fec, hora: hor, cliente: cli, telefono: telefono, tipoEntrega: this.tipoEntrega, direccion: direccion, pago: this.metodoPago, total: totalCargar, envio: costoEnvio, detalleResumen: detExcel.join(' + '), linkMapa: linkMapa, carrito: scriptCart };
         
         this.encolarVenta(ventaData);
         
@@ -1203,6 +1213,8 @@ class PizzeriaPOS {
     imprimirWA() {
         let texto = document.getElementById('wa-text').value.trim(); 
         if (!texto) { alert("Tenés que pegar el texto del pedido primero."); return; }
+        // Filtrar cualquier línea residual de link de Google Maps para mantener la comanda limpia
+        texto = texto.replace(/^\*?UBICACI[OÓ]N MAPA:\*?.*$/gim, '').replace(/^https?:\/\/(www\.)?google\.com\/maps.*$/gim, '').replace(/\n{3,}/g, '\n\n').trim();
         
         // XSS Defense: sanitize ALL wa text before creating html structure.
         let sanitizedText = this.sanitizeForHTML(texto);

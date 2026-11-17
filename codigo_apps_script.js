@@ -6,7 +6,7 @@ function doPost(e) {
   var data = JSON.parse(e.postData.contents);
   var orderId = "#" + new Date().getTime().toString().slice(-6); 
   
-  // 1. Guarda el ticket general en la pestaña "Ventas"
+  // 1. Guarda el ticket general en la pestaña "Ventas" (Columna L: Ubicación Mapa)
   sheetVentas.appendRow([
     data.fecha,
     data.hora,
@@ -18,7 +18,8 @@ function doPost(e) {
     data.total,
     data.envio,
     data.detalleResumen,
-    orderId
+    orderId,
+    data.linkMapa || "-"
   ]);
   
   // 2. Desglosa los productos en la pestaña "Productos"
