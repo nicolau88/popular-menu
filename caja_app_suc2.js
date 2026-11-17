@@ -1,7 +1,7 @@
 // Configuración y Constantes
 const CONST_PASSWORD_HASH = "4ab34cdf3e765ab1629ed66b4d683a8d5bd014b8b7e8f2f3edd4cfab45101031"; // Hash SHA-256 de "1650"
 const CONST_URL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQae4azVxGxHwSNGEcqoMUia0sNSykZxGA0koTpJ2SRcihjopNGaVAIlm2MjOhbxgmU6Y05e0ffzNVB/pub?output=csv';
-const CONST_URL_REGISTRO = 'https://script.google.com/macros/s/AKfycbxZETP1WxkmcnBdaimHc-F8CMQmLCJxeSlkNfvgbj2v4d-L5sPfptHA1B8fXLcfTty_/exec';
+const CONST_URL_REGISTRO = 'https://script.google.com/macros/s/AKfycbxf7nSKo7W_Wly2OTrBTOnIo1_esul6wmFZo3pqSgBdxgng97ZlpFawnLyet8lIqOyH/exec';
 const DOCENA_SIZE = 12;
 
 class PizzeriaPOS {
@@ -11,6 +11,9 @@ class PizzeriaPOS {
         this.subtotalReal = 0;
         this.metodoPago = null;
         this.tipoEntrega = 'Mostrador';
+        this.preciosZonas = { 1: 3000, 2: 3500, 3: 4000 };
+        this.zonaEnvioActiva = null;
+        this.sucursalKey = 'sucursal2';
         
         this.dbClasicas = [];
         this.dbPremium = [];
@@ -51,6 +54,7 @@ class PizzeriaPOS {
     // --- INIT & EVENTS ---
     init() {
         this.bindEvents();
+        this.actualizarDatalistAgenda();
         this.actualizarUIInternet();
     }
 
@@ -100,10 +104,53 @@ class PizzeriaPOS {
         document.getElementById('btn-desc-porcentaje').addEventListener('click', () => this.aplicarDescuento('%'));
         document.getElementById('btn-desc-monto').addEventListener('click', () => this.aplicarDescuento('$'));
         
-        // Tipo de Entrega
+        // Tipo de Entrega y Zonas de Envío
         document.getElementById('btn-tipo-mostrador').addEventListener('click', () => this.setTipoEntrega('Mostrador'));
         document.getElementById('btn-tipo-delivery').addEventListener('click', () => this.setTipoEntrega('Delivery'));
-        document.getElementById('input-envio').addEventListener('input', () => this.updateCarritoUI());
+        document.querySelectorAll('.btn-zona-pos').forEach(btn => {
+            btn.addEventListener('click', () => this.seleccionarZonaEnvioPOS(parseInt(btn.dataset.zona, 10)));
+        });
+        document.getElementById('input-envio').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value) || 0;
+            this.zonaEnvioActiva = null;
+            document.querySelectorAll('.btn-zona-pos').forEach(b => {
+                const z = parseInt(b.dataset.zona, 10);
+                if (this.preciosZonas[z] === val) {
+                    b.classList.add('active');
+                    this.zonaEnvioActiva = z;
+                } else {
+                    b.classList.remove('active');
+                }
+            });
+            this.updateCarritoUI();
+        });
+
+        // Auto-detección de zona al escribir calle/número/entre calles en Caja
+        const autoDetectarZonaCaja = () => {
+            if (typeof GestorZonasEnvio === 'undefined') return;
+            const calle = document.getElementById('input-calle')?.value.trim() || '';
+            const num = document.getElementById('input-numero')?.value.trim() || '';
+            const entre = document.getElementById('input-entre-calles')?.value.trim() || '';
+            if (!calle) return;
+            const coords = GestorZonasEnvio.geocodificarDireccionLaPlataLocal(`${calle} ${num}`, entre);
+            if (coords) {
+                const zona = GestorZonasEnvio.detectarZona(coords[0], coords[1], this.sucursalKey);
+                if (zona && zona.id) {
+                    this.seleccionarZonaEnvioPOS(zona.id);
+                }
+            }
+        };
+        ['input-calle', 'input-numero', 'input-entre-calles'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', autoDetectarZonaCaja);
+        });
+
+        // Agenda de Clientes por Teléfono
+        const inpTel = document.getElementById('input-telefono');
+        if (inpTel) {
+            inpTel.addEventListener('input', (e) => this.buscarClienteEnAgenda(e.target.value));
+            inpTel.addEventListener('change', (e) => this.buscarClienteEnAgenda(e.target.value));
+        }
 
         // Total Inputs
         document.getElementById('total-display').addEventListener('input', () => this.calcularVuelto());
@@ -182,7 +229,15 @@ class PizzeriaPOS {
         this.precioBaseClasica = 0; this.promoDocenaItem = null;
         
         data.forEach(item => {
-            if (!item.SECCION || !item.NOMBRE || this.normalize(item.SECCION) === 'CONFIGURACION') return;
+            if (!item.SECCION || !item.NOMBRE) return;
+            const cleanSecCfg = this.normalize(item.SECCION).replace(/_/g, ' ');
+            if (cleanSecCfg === 'CONFIGURACION') {
+                const cleanKey = this.normalize(item.NOMBRE).replace(/_/g, ' ');
+                if (cleanKey === 'ENVIO ZONA 1') this.preciosZonas[1] = this.cleanPrice(item.PRECIO_1) || 3000;
+                if (cleanKey === 'ENVIO ZONA 2') this.preciosZonas[2] = this.cleanPrice(item.PRECIO_1) || 3500;
+                if (cleanKey === 'ENVIO ZONA 3') this.preciosZonas[3] = this.cleanPrice(item.PRECIO_1) || 4000;
+                return;
+            }
             if (item['SUCURSAL 2'] && this.normalize(item['SUCURSAL 2']) === 'NO') return;
             if (item.NOMBRE.toUpperCase().includes('DOCENA') && (item.NOMBRE.toUpperCase().includes('ESPECIAL') || item.NOMBRE.toUpperCase().includes('FATAY'))) return;
             
@@ -190,13 +245,19 @@ class PizzeriaPOS {
             let isDocena = item.NOMBRE.toUpperCase().includes('DOCENA') && !item.NOMBRE.toUpperCase().includes('ESPECIAL');
             let isFatay = item.NOMBRE.toUpperCase().includes('FATAY') || seccion.includes('FATAY');
 
+            let stockVal = item['STOCK SUCURSAL 2'] ? parseInt(item['STOCK SUCURSAL 2']) : null;
+            let stock = isNaN(stockVal) ? null : stockVal;
+
+            // Filtro para ocultar empanadas sin stock
+            if (stock !== null && stock <= 0 && seccion.includes('EMPANADA')) return;
+
             if (isDocena && !isFatay && !this.promoDocenaItem) this.promoDocenaItem = { nombre: item.NOMBRE, precio: p1 };
             if (seccion.includes('CLASICAS') && !isDocena) { this.dbClasicas.push(item); if (this.precioBaseClasica === 0) this.precioBaseClasica = p1; }
             if (seccion.includes('PREMIUM') && !isDocena) this.dbPremium.push(item);
 
             if (isDocena && !isFatay) return;
 
-            let prodObj = { nombre: item.NOMBRE, descripcion: item.DESCRIPCION || "", variante: "", precio: p1, categoria: "", isDocena: isDocena };
+            let prodObj = { nombre: item.NOMBRE, descripcion: item.DESCRIPCION || "", variante: "", precio: p1, categoria: "", isDocena: isDocena, stock: stock };
 
             if (seccion.includes('MEDIA')) {
                 if(p2 > 0) this.catalogo.push({ ...prodObj, variante: 'Horneada', precio: p2, categoria: 'MEDIAS_HORNEADAS', isDocena: false });
@@ -211,6 +272,7 @@ class PizzeriaPOS {
             } else if(seccion.includes('EXTRA')) { this.catalogo.push({ ...prodObj, categoria: 'EXTRAS' }); }
         });
         
+        this.actualizarBotonesZonasPOS();
         this.catalogo.sort((a, b) => (a.isDocena && !b.isDocena) ? 1 : (!a.isDocena && b.isDocena) ? -1 : 0);
         // Default filter
         const defaultBtn = document.querySelector('.btn-filtro[data-categoria="PIZZAS_HORNEADAS"]');
@@ -288,6 +350,20 @@ class PizzeriaPOS {
             precioDiv.textContent = `$${this.formatPrice(item.precio)}`;
             btn.appendChild(precioDiv);
 
+            if (item.stock !== null && item.categoria === 'BEBIDAS') {
+                let stockDiv = document.createElement('div');
+                stockDiv.className = `stock-badge ${item.stock < 5 ? 'stock-low' : ''}`;
+                stockDiv.textContent = `Stock: ${item.stock}`;
+                btn.appendChild(stockDiv);
+                
+                if (item.stock <= 0) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                    stockDiv.textContent = 'Sin Stock';
+                }
+            }
+
             btn.addEventListener('click', () => { 
                 if (item.isDocena && item.categoria !== 'FATAYS') this.abrirModalDocena(item); 
                 else this.agregarAlCarrito(item.nombre, item.variante, item.precio, item.isDocena, item.categoria, item.descripcion); 
@@ -306,7 +382,18 @@ class PizzeriaPOS {
 
     // --- Logica Carrito ---
     agregarAlCarrito(n, v, p, d, c, desc = "") {
+        let catItem = this.catalogo.find(i => i.nombre === n && i.variante === v);
         let ex = this.carrito.find(i => i.nombre === n && i.variante === v);
+        
+        // Validar stock antes de agregar
+        if (catItem && catItem.stock !== null && catItem.categoria === 'BEBIDAS') {
+            let currentInCart = ex ? ex.cantidad : 0;
+            if (currentInCart >= catItem.stock) {
+                this.mostrarToast("⚠️ Stock insuficiente para " + n);
+                return;
+            }
+        }
+
         if (ex && !d) ex.cantidad++; 
         else this.carrito.push({ nombre: n, variante: v, precio: p, cantidad: 1, isDocena: d, categoria: c, descripcion: desc });
         this.autoEmp(); 
@@ -350,6 +437,17 @@ class PizzeriaPOS {
     }
 
     cambiarCantidad(index, diff) {
+        let itemCart = this.carrito[index];
+        if (diff > 0 && itemCart.categoria === 'BEBIDAS') {
+            let catItem = this.catalogo.find(i => i.nombre === itemCart.nombre && i.variante === itemCart.variante);
+            if (catItem && catItem.stock !== null) {
+                if (itemCart.cantidad >= catItem.stock) {
+                    this.mostrarToast("⚠️ Stock insuficiente para " + itemCart.nombre);
+                    return;
+                }
+            }
+        }
+
         this.carrito[index].cantidad += diff; 
         if (this.carrito[index].cantidad <= 0) this.carrito.splice(index, 1); 
         this.autoEmp(); 
@@ -359,6 +457,97 @@ class PizzeriaPOS {
     eliminarItemCarrito(index) {
         this.carrito.splice(index, 1);
         this.autoEmp();
+        this.updateCarritoUI();
+    }
+
+    actualizarBotonesZonasPOS() {
+        [1, 2, 3].forEach(z => {
+            const lbl = document.getElementById(`lbl-pos-z${z}`);
+            if (lbl) lbl.textContent = `$${this.formatPrice(this.preciosZonas[z])}`;
+        });
+    }
+
+    // --- AGENDA LOCAL DE CLIENTES HABITUALES (POR TELÉFONO) ---
+    obtenerAgendaClientes() {
+        try {
+            return JSON.parse(localStorage.getItem('pizzeria_agenda_clientes_pos_v1')) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    guardarClienteEnAgenda(telefonoRaw, nombre, calle, numero, entreCalles, depto, zonaId, envio) {
+        try {
+            const telKey = (telefonoRaw || '').replace(/\D/g, '');
+            if (telKey.length < 6 || !calle) return;
+            const agenda = this.obtenerAgendaClientes();
+            agenda[telKey] = {
+                telefono: telefonoRaw.trim(),
+                nombre: (nombre && nombre !== 'Delivery' && nombre !== 'Mostrador') ? nombre.trim() : (agenda[telKey]?.nombre || ''),
+                calle: calle.trim(),
+                numero: (numero || '').trim(),
+                entreCalles: (entreCalles || '').trim(),
+                depto: (depto || '').trim(),
+                zonaId: zonaId || agenda[telKey]?.zonaId || null,
+                envio: envio || 0,
+                updatedAt: Date.now()
+            };
+            localStorage.setItem('pizzeria_agenda_clientes_pos_v1', JSON.stringify(agenda));
+            this.actualizarDatalistAgenda();
+        } catch (e) {}
+    }
+
+    actualizarDatalistAgenda() {
+        try {
+            const datalist = document.getElementById('lista-telefonos-clientes');
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            const agenda = this.obtenerAgendaClientes();
+            Object.values(agenda)
+                .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+                .slice(0, 200)
+                .forEach(cli => {
+                    const opt = document.createElement('option');
+                    opt.value = cli.telefono;
+                    opt.textContent = `${cli.nombre ? cli.nombre + ' — ' : ''}${cli.calle} ${cli.numero}${cli.entreCalles ? ' (e/ ' + cli.entreCalles + ')' : ''}`;
+                    datalist.appendChild(opt);
+                });
+        } catch (e) {}
+    }
+
+    buscarClienteEnAgenda(valorInput) {
+        try {
+            const telKey = (valorInput || '').replace(/\D/g, '');
+            if (telKey.length < 6) return;
+            const agenda = this.obtenerAgendaClientes();
+            const ficha = agenda[telKey];
+            if (!ficha) return;
+
+            const inpCliente = document.getElementById('input-cliente');
+            if (inpCliente && ficha.nombre) inpCliente.value = ficha.nombre;
+            if (document.getElementById('input-calle')) document.getElementById('input-calle').value = ficha.calle || '';
+            if (document.getElementById('input-numero')) document.getElementById('input-numero').value = ficha.numero || '';
+            if (document.getElementById('input-entre-calles')) document.getElementById('input-entre-calles').value = ficha.entreCalles || '';
+            if (document.getElementById('input-depto')) document.getElementById('input-depto').value = ficha.depto || '';
+
+            if (ficha.zonaId && this.preciosZonas[ficha.zonaId]) {
+                this.seleccionarZonaEnvioPOS(ficha.zonaId);
+            } else if (ficha.envio > 0) {
+                document.getElementById('input-envio').value = ficha.envio;
+                this.updateCarritoUI();
+            }
+            this.mostrarToast(`📋 Cliente cargado: ${ficha.nombre || ficha.calle}`);
+        } catch (e) {}
+    }
+
+    seleccionarZonaEnvioPOS(zonaId) {
+        this.zonaEnvioActiva = zonaId;
+        const precio = this.preciosZonas[zonaId] || 0;
+        const inputEnvio = document.getElementById('input-envio');
+        if (inputEnvio) inputEnvio.value = precio;
+        document.querySelectorAll('.btn-zona-pos').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.zona, 10) === zonaId);
+        });
         this.updateCarritoUI();
     }
 
@@ -581,6 +770,7 @@ class PizzeriaPOS {
             direccion = dirParts.length > 0 ? dirParts.join(" ") : "Sin dirección";
             tituloTicket = "DELIVERY";
             htmlDelivery = `<div>Tel: ${this.sanitizeForHTML(telefono)}</div><div>Dir: ${this.sanitizeForHTML(direccion)}</div>`;
+            this.guardarClienteEnAgenda(telefono, cli, calle, num, entre, depto, this.zonaEnvioActiva, costoEnvio);
         }
 
         let t = `<div class="t-center t-bold">PIZZERIA POPULAR</div><div class="t-center" style="${this.tipoEntrega === 'Delivery' ? 'font-size:1.5rem; font-weight:bold; letter-spacing:2px;' : ''}">${tituloTicket}</div>${this.tipoEntrega === 'Mostrador' ? '' : `<div class="t-center">Turno #${numTurno}</div>`}<div class="t-line"></div><div>Fecha: ${fec} ${hor}</div><div>Cliente: ${this.sanitizeForHTML(cli)}</div>${htmlDelivery}<div class="t-line"></div>`;
@@ -598,10 +788,11 @@ class PizzeriaPOS {
             t += `<div class="t-item"><div><b>${it.cantidad}x ${this.sanitizeForHTML(cleanName)}</b>${vTicket}${descHtml}</div><div>$${this.formatPrice(it.precio*it.cantidad)}</div></div>`;
             detExcel.push(`${it.cantidad}x ${cleanName} [${cleanVar}]`);
             
-            // Agregar ítem base al scriptCart (si es Promo, etiquetarla para Excel)
+            // Agregar ítem base al scriptCart (si es Promo, Bebida o Extra, etiquetarla para Excel)
             let clone = { name: cleanName, variant: cleanVar, quantity: it.cantidad, price: it.precio, isDocena: it.isDocena };
             if (it.categoria === 'PROMOS' && !it.isDocena) clone.categoria = "Promo";
             else if (it.categoria === 'EXTRAS') clone.categoria = "Extra";
+            else if (it.categoria === 'BEBIDAS') clone.categoria = "Bebida";
             scriptCart.push(clone);
 
             // Desglose de pizzas de Promo para control de stock
@@ -648,6 +839,17 @@ class PizzeriaPOS {
         
         this.encolarVenta(ventaData);
         
+        // Deduct stock in memory for BEBIDAS
+        this.carrito.forEach(it => {
+            if (it.categoria === 'BEBIDAS') {
+                let catItem = this.catalogo.find(c => c.nombre === it.nombre && c.variante === it.variante);
+                if (catItem && catItem.stock !== null) {
+                    catItem.stock -= it.cantidad;
+                    if (catItem.stock < 0) catItem.stock = 0;
+                }
+            }
+        });
+
         // Reset state
         this.carrito = []; 
         document.getElementById('paga-con').value = ''; 
@@ -665,9 +867,17 @@ class PizzeriaPOS {
             document.getElementById('input-entre-calles').value = '';
             document.getElementById('input-depto').value = '';
             document.getElementById('input-envio').value = '';
+            this.zonaEnvioActiva = null;
+            document.querySelectorAll('.btn-zona-pos').forEach(b => b.classList.remove('active'));
             this.setTipoEntrega('Mostrador');
         }
         this.updateCarritoUI();
+        
+        // Re-render catalog to update stock badges
+        let activeBtn = document.querySelector('#contenedor-filtros .btn-filtro.active');
+        let currentCat = activeBtn ? activeBtn.dataset.categoria : 'PIZZAS_HORNEADAS';
+        this.filtrarCatalogo(currentCat, activeBtn);
+
         this.mostrarToast("✅ Venta registrada");
     }
 

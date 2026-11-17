@@ -7,6 +7,16 @@ class PizzeriaApp {
     constructor() {
         this.cart = [];
         this.costoDeEnvio = 0;
+        this.preciosZonas = { 1: 3000, 2: 3500, 3: 4000 };
+        this.datosZonaEnvio = {
+            confirmada: false,
+            dentroDeCobertura: false,
+            zonaId: null,
+            zonaNombre: '',
+            costo: 0,
+            lat: null,
+            lng: null
+        };
         this.aliasTransferencia = "Consultar por WhatsApp";
 
         this.dbClasicas = [];
@@ -32,6 +42,11 @@ class PizzeriaApp {
         this.bindEvents();
         this.checkStatus();
         setInterval(() => this.checkStatus(), 60000);
+        if (typeof MapaCheckoutPizzeria !== 'undefined') {
+            this.mapaCheckout = new MapaCheckoutPizzeria(this, 'sucursal2');
+            this.mapaCheckout.init();
+        }
+        this.cargarDatosClienteLocal();
         this.cargarMenu();
     }
 
@@ -45,6 +60,14 @@ class PizzeriaApp {
         document.getElementById('cli-horario').addEventListener('change', () => this.toggleHorarioFields());
         document.getElementById('cli-pago').addEventListener('change', () => this.togglePagoFields());
         
+        const btnCopiarAlias = document.getElementById('btn-copiar-alias');
+        if (btnCopiarAlias) btnCopiarAlias.addEventListener('click', () => this.copiarAlias());
+
+        ['cli-nombre', 'cli-telefono', 'cli-direccion', 'cli-entrecalles', 'cli-depto'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => this.guardarDatosClienteLocal());
+        });
+
         // Actual submit handled natively by the <form> to leverage required fields HTML5
         document.getElementById('checkout-form').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -56,17 +79,45 @@ class PizzeriaApp {
         document.getElementById('btn-confirm-docena').addEventListener('click', () => this.confirmDocena());
     }
 
-    // --- CARGA Y RENDERIZADO DEL MENÚ (DOM Seguro y Optimo) ---
+    // --- CARGA Y RENDERIZADO DEL MENÚ CON CACHÉ INSTANTÁNEO (Stale-While-Revalidate) ---
     cargarMenu() {
+        const CACHE_KEY = 'menuPublicoCache_v1';
+        let cachedJson = null;
+
+        try {
+            cachedJson = localStorage.getItem(CACHE_KEY);
+            if (cachedJson) {
+                const cachedData = JSON.parse(cachedJson);
+                if (Array.isArray(cachedData) && cachedData.length > 0) {
+                    document.getElementById('loading-msg').style.display = 'none';
+                    this.menuItems = cachedData;
+                    this.renderMenu(cachedData);
+                }
+            }
+        } catch (e) {
+            console.warn('No se pudo leer caché local del menú:', e);
+        }
+
         Papa.parse(CONST_URL_CSV + '&t=' + new Date().getTime(), {
             download: true, header: true, skipEmptyLines: true,
             complete: (results) => {
+                if (!results || !Array.isArray(results.data) || results.data.length === 0) return;
                 document.getElementById('loading-msg').style.display = 'none';
-                this.menuItems = results.data; // Guardar para buscar descripciones después
-                this.renderMenu(results.data);
+                this.menuItems = results.data;
+                try {
+                    const freshJson = JSON.stringify(results.data);
+                    localStorage.setItem(CACHE_KEY, freshJson);
+                    if (!cachedJson || freshJson !== cachedJson) {
+                        this.renderMenu(results.data);
+                    }
+                } catch (e) {
+                    this.renderMenu(results.data);
+                }
             },
             error: (err) => {
-                document.getElementById('loading-msg').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:red;"></i> Error al conectar con el sistema.';
+                if (!this.menuItems || this.menuItems.length === 0) {
+                    document.getElementById('loading-msg').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:red;"></i> Error al conectar con el sistema.';
+                }
             }
         });
     }
@@ -82,6 +133,15 @@ class PizzeriaApp {
             'bebidas-unificadas-list': ['BEBIDAS SIN ALCOHOL', 'BEBIDAS', 'GASEOSAS', 'SIN ALCOHOL', 'BEBIDAS_SIN_ALCOHOL', 'CERVEZAS', 'CERVEZA', 'ALCOHOL']
         };
 
+        // Limpiar contenedores y bases para renderizado idempotente (sin duplicar al revalidar caché)
+        this.dbClasicas = [];
+        this.dbPremium = [];
+        this.precioBaseClasica = 0;
+        Object.keys(containerMap).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '';
+        });
+
         items.forEach(item => {
             if (!item.SECCION || !item.NOMBRE) return;
             if (item['SUCURSAL 2'] && this.normalize(item['SUCURSAL 2']) === 'NO') return;
@@ -91,9 +151,17 @@ class PizzeriaApp {
 
             if (isDocena && (item.NOMBRE.toUpperCase().includes('ESPECIAL') || item.NOMBRE.toUpperCase().includes('FATAY'))) return;
 
+            // Filtro para ocultar empanadas sin stock
+            let stockVal = item['STOCK SUCURSAL 2'] ? parseInt(item['STOCK SUCURSAL 2']) : null;
+            let stock = isNaN(stockVal) ? null : stockVal;
+            if (stock !== null && stock <= 0 && cleanSection.includes('EMPANADA')) return;
+
             if (cleanSection === 'CONFIGURACION') {
-                if (this.normalize(item.NOMBRE) === 'ENVIO') this.costoDeEnvio = this.cleanPrice(item.PRECIO_1);
-                if (this.normalize(item.NOMBRE) === 'ALIAS SUCURSAL 2') {
+                const cleanKey = this.normalize(item.NOMBRE).replace(/_/g, ' ');
+                if (cleanKey === 'ENVIO ZONA 1') this.preciosZonas[1] = this.cleanPrice(item.PRECIO_1) || 3000;
+                if (cleanKey === 'ENVIO ZONA 2') this.preciosZonas[2] = this.cleanPrice(item.PRECIO_1) || 3500;
+                if (cleanKey === 'ENVIO ZONA 3') this.preciosZonas[3] = this.cleanPrice(item.PRECIO_1) || 4000;
+                if (cleanKey === 'ALIAS SUCURSAL 2') {
                     this.aliasTransferencia = item.DESCRIPCION || item.PRECIO_1 || "Consultar por WhatsApp";
                     document.getElementById('display-alias').textContent = this.aliasTransferencia;
                 }
@@ -140,19 +208,20 @@ class PizzeriaApp {
                 let list = document.getElementById(lId);
                 if (list) {
                     totalItems += list.children.length;
-                    if (list.children.length === 0 && list.previousElementSibling && list.previousElementSibling.classList.contains('subsection-title')) {
-                        list.previousElementSibling.style.display = 'none';
+                    if (list.previousElementSibling && list.previousElementSibling.classList.contains('subsection-title')) {
+                        list.previousElementSibling.style.display = list.children.length === 0 ? 'none' : '';
                     }
                 }
             });
 
-            if (totalItems === 0) {
-                let h2 = document.getElementById(sec.id);
-                if (h2) h2.style.display = 'none';
-                let pill = document.querySelector(`a[href="#${sec.id}"]`);
-                if (pill) pill.style.display = 'none';
-            }
+            let h2 = document.getElementById(sec.id);
+            if (h2) h2.style.display = totalItems === 0 ? 'none' : '';
+            let pill = document.querySelector(`a[href="#${sec.id}"]`);
+            if (pill) pill.style.display = totalItems === 0 ? 'none' : '';
         });
+
+        if (this.mapaCheckout) this.mapaCheckout.actualizarLeyendaPrecios();
+        this.updateCartUI();
     }
 
     buildProductNode(targetId, item, p1Num, p2Num, isPopular, isDocena) {
@@ -331,16 +400,23 @@ class PizzeriaApp {
                 container.appendChild(row);
             });
 
-            if (tipoEntrega === 'delivery' && this.costoDeEnvio > 0) {
+            if (tipoEntrega === 'delivery') {
                 let rDlv = document.createElement('div'); rDlv.className="cart-item"; rDlv.style="background: rgba(255,193,7,0.1); border-radius: 8px; padding: 10px; border: 1px solid rgba(255,193,7,0.3); margin-top: 10px;";
-                rDlv.innerHTML = `<div style="flex:1"><div class="cart-item-title" style="color: var(--primary);">🛵 Costo de Envío</div></div><div class="cart-item-price" style="color: var(--primary); margin-right:0;">${this.formatPrice(this.costoDeEnvio)}</div>`;
+                if (this.datosZonaEnvio && this.datosZonaEnvio.confirmada && this.datosZonaEnvio.dentroDeCobertura) {
+                    rDlv.innerHTML = `<div style="flex:1"><div class="cart-item-title" style="color: var(--primary);">🛵 Envío (${this.datosZonaEnvio.zonaNombre})</div></div><div class="cart-item-price" style="color: var(--primary); margin-right:0;">${this.formatPrice(this.costoDeEnvio)}</div>`;
+                } else if (this.datosZonaEnvio && this.datosZonaEnvio.confirmada && !this.datosZonaEnvio.dentroDeCobertura) {
+                    rDlv.innerHTML = `<div style="flex:1"><div class="cart-item-title" style="color: var(--primary);">🛵 Costo de Envío</div><small style="color:#ccc;">Fuera de Zonas 1, 2 y 3</small></div><div class="cart-item-price" style="color: var(--primary); margin-right:0; font-size:0.9rem;">A consultar</div>`;
+                } else {
+                    rDlv.innerHTML = `<div style="flex:1"><div class="cart-item-title" style="color: var(--primary);">🛵 Costo de Envío</div><small style="color:#ccc;">Marcá tu cuadra en el mapa abajo</small></div><div class="cart-item-price" style="color: #aaa; margin-right:0; font-size:0.85rem;">Según zona</div>`;
+                }
                 container.appendChild(rDlv);
             }
         }
 
         let totalFinal = tipoEntrega === 'delivery' ? subtotal + this.costoDeEnvio : subtotal;
+        let sufijoTotal = (tipoEntrega === 'delivery' && this.datosZonaEnvio?.confirmada && !this.datosZonaEnvio.dentroDeCobertura) ? ' (+ Envío a consultar)' : '';
         document.getElementById('cart-count').textContent = count;
-        document.getElementById('cart-total').textContent = `Total: ${this.formatPrice(totalFinal)}`;
+        document.getElementById('cart-total').textContent = `Total: ${this.formatPrice(totalFinal)}${sufijoTotal}`;
 
         document.querySelectorAll('.qty-display').forEach(display => {
             const name = display.getAttribute('data-name');
@@ -465,15 +541,88 @@ class PizzeriaApp {
     }
 
     // --- FORMULARIO Y UTILS INTERFAZ ---
+    guardarDatosClienteLocal() {
+        try {
+            const prevRaw = localStorage.getItem('pizzeria_popular_cliente_v1');
+            const prev = prevRaw ? JSON.parse(prevRaw) : {};
+            const datos = {
+                nombre: document.getElementById('cli-nombre')?.value.trim() || prev.nombre || '',
+                telefono: document.getElementById('cli-telefono')?.value.trim() || prev.telefono || '',
+                direccion: document.getElementById('cli-direccion')?.value.trim() || prev.direccion || '',
+                entreCalles: document.getElementById('cli-entrecalles')?.value.trim() || prev.entreCalles || '',
+                depto: document.getElementById('cli-depto')?.value.trim() || prev.depto || '',
+                lat: (this.datosZonaEnvio && typeof this.datosZonaEnvio.lat === 'number') ? this.datosZonaEnvio.lat : (prev.lat || null),
+                lng: (this.datosZonaEnvio && typeof this.datosZonaEnvio.lng === 'number') ? this.datosZonaEnvio.lng : (prev.lng || null)
+            };
+            localStorage.setItem('pizzeria_popular_cliente_v1', JSON.stringify(datos));
+        } catch (e) {}
+    }
+
+    cargarDatosClienteLocal() {
+        try {
+            const raw = localStorage.getItem('pizzeria_popular_cliente_v1');
+            if (!raw) return;
+            const d = JSON.parse(raw);
+            if (d.nombre && document.getElementById('cli-nombre')) document.getElementById('cli-nombre').value = d.nombre;
+            if (d.telefono && document.getElementById('cli-telefono')) document.getElementById('cli-telefono').value = d.telefono;
+            if (d.direccion && document.getElementById('cli-direccion')) document.getElementById('cli-direccion').value = d.direccion;
+            if (d.entreCalles && document.getElementById('cli-entrecalles')) document.getElementById('cli-entrecalles').value = d.entreCalles;
+            if (d.depto && document.getElementById('cli-depto')) document.getElementById('cli-depto').value = d.depto;
+            if (typeof d.lat === 'number' && typeof d.lng === 'number' && this.mapaCheckout) {
+                this.mapaCheckout.centrarEnPuntoGuardado(d.lat, d.lng);
+            }
+        } catch (e) {}
+    }
+
+    copiarAlias() {
+        const btn = document.getElementById('btn-copiar-alias');
+        const alias = (this.aliasTransferencia || document.getElementById('display-alias')?.textContent || '').trim();
+        if (!alias || alias === 'Consultar por WhatsApp') return;
+        const feedbackOk = () => {
+            if (!btn) return;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> ¡COPIADO!';
+            btn.style.background = '#25D366';
+            btn.style.color = '#fff';
+            setTimeout(() => {
+                btn.innerHTML = orig;
+                btn.style.background = '#4FC3F7';
+                btn.style.color = '#000';
+            }, 2000);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(alias).then(feedbackOk).catch(() => {});
+        } else {
+            const tmp = document.createElement('input');
+            tmp.value = alias;
+            document.body.appendChild(tmp);
+            tmp.select();
+            document.execCommand('copy');
+            document.body.removeChild(tmp);
+            feedbackOk();
+        }
+    }
+
+    setDatosZonaEnvio(datos) {
+        this.datosZonaEnvio = datos;
+        this.costoDeEnvio = (datos.confirmada && datos.dentroDeCobertura) ? datos.costo : 0;
+        this.updateCartUI();
+    }
     toggleCart() {
         const modal = document.getElementById('cart-modal');
         modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        if (modal.style.display === 'flex' && this.mapaCheckout) {
+            this.mapaCheckout.invalidateSize();
+        }
     }
     toggleDeliveryFields() {
         const entrega = document.getElementById('cli-entrega').value;
         const reqFields = ['cli-direccion', 'cli-entrecalles'];
         reqFields.forEach(id => { document.getElementById(id).required = (entrega === 'delivery'); });
         document.getElementById('delivery-fields').style.display = entrega === 'delivery' ? 'flex' : 'none';
+        if (entrega === 'delivery' && this.mapaCheckout) {
+            this.mapaCheckout.invalidateSize();
+        }
     }
     toggleHorarioFields() {
         const isProg = document.getElementById('cli-horario').value === 'Programado';
@@ -497,13 +646,26 @@ class PizzeriaApp {
 
     // --- ENVÍO DE PEDIDO (Solución Race Condition Fetch+WhatsApp) ---
     async enviarPedido() {
+        const entrega = document.getElementById('cli-entrega').value;
+        if (entrega === 'delivery') {
+            if (!this.datosZonaEnvio || !this.datosZonaEnvio.confirmada) {
+                if (this.mapaCheckout) await this.mapaCheckout.buscarDireccionEscrita(false);
+            }
+            if (!this.datosZonaEnvio || !this.datosZonaEnvio.confirmada) {
+                alert('Por favor, tocá tu cuadra en el mapa (o presioná "Ubicar dirección") para confirmar la zona de envío.');
+                document.getElementById('mapa-envio-wrapper')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+
+        this.guardarDatosClienteLocal();
+
         const btnSubmit = document.getElementById('btn-submit-order');
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando Pedido...';
 
         const nombre = document.getElementById('cli-nombre').value.trim();
         const telefono = document.getElementById('cli-telefono').value.trim();
-        const entrega = document.getElementById('cli-entrega').value;
         const direccion = document.getElementById('cli-direccion').value.trim();
         const entreCalles = document.getElementById('cli-entrecalles').value.trim();
         const depto = document.getElementById('cli-depto').value.trim();
@@ -515,13 +677,19 @@ class PizzeriaApp {
 
         const fechaActual = new Date().toLocaleDateString('es-AR');
         const horaActual = new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'});
-        let direccionFinal = entrega === 'delivery' ? `${direccion} (e/ ${entreCalles}) ${depto ? 'Depto: '+depto : ''}` : 'Retira por el local';
+        const infoZonaStr = (entrega === 'delivery' && this.datosZonaEnvio?.zonaNombre) ? ` [${this.datosZonaEnvio.zonaNombre}]` : '';
+        let direccionFinal = entrega === 'delivery' ? `${direccion} (e/ ${entreCalles}) ${depto ? 'Depto: '+depto : ''}${infoZonaStr}` : 'Retira por el local';
         
         let texto = `*NUEVO PEDIDO*\n\n*CLIENTE:* ${nombre}\n*TELÉFONO:* ${telefono}\n\n`;
         
         if(entrega === 'delivery') {
-            texto += `*TIPO DE ENTREGA:* Delivery\n*DIRECCIÓN:* ${direccion}\n*ENTRE CALLES:* ${entreCalles}\n`;
-            if(depto) texto += `*DEPTO/PISO:* ${depto}\n\n`; else texto += `\n`;
+            texto += `*TIPO DE ENTREGA:* Delivery (${this.datosZonaEnvio.zonaNombre})\n*DIRECCIÓN:* ${direccion}\n*ENTRE CALLES:* ${entreCalles}\n`;
+            if(depto) texto += `*DEPTO/PISO:* ${depto}\n`;
+            if(this.datosZonaEnvio?.lat && this.datosZonaEnvio?.lng) {
+                texto += `*UBICACIÓN MAPA:* https://www.google.com/maps?q=${this.datosZonaEnvio.lat},${this.datosZonaEnvio.lng}\n\n`;
+            } else {
+                texto += `\n`;
+            }
         } else { texto += `*TIPO DE ENTREGA:* Retira por el local\n\n`; }
         
         texto += `*HORARIO:* ${tipoHorario === 'Lo antes posible' ? 'Lo antes posible' : `${horaExacta} hs`}\n`;
@@ -553,10 +721,17 @@ class PizzeriaApp {
             }
         });
 
-        if (entrega === 'delivery' && this.costoDeEnvio > 0) texto += `Costo de Envío - ${this.formatPrice(this.costoDeEnvio)}\n`;
+        if (entrega === 'delivery') {
+            if (this.costoDeEnvio > 0) {
+                texto += `Costo de Envío (${this.datosZonaEnvio.zonaNombre}) - ${this.formatPrice(this.costoDeEnvio)}\n`;
+            } else {
+                texto += `Costo de Envío - A CONSULTAR SEGÚN UBICACIÓN\n`;
+            }
+        }
 
         let totalFinal = entrega === 'delivery' ? subtotal + this.costoDeEnvio : subtotal;
-        texto += `\n*TOTAL A ABONAR: ${this.formatPrice(totalFinal)}*\n\n`;
+        let notaEnvioTotal = (entrega === 'delivery' && !this.datosZonaEnvio?.dentroDeCobertura) ? ' (+ Envío a consultar)' : '';
+        texto += `\n*TOTAL A ABONAR: ${this.formatPrice(totalFinal)}${notaEnvioTotal}*\n\n`;
         if(pago === 'Transferencia') texto += `*NOTA:* Te adjunto el comprobante de transferencia al alias: ${this.aliasTransferencia}\n`;
 
         // Preparar el carrito para el Excel, desglosando las Promos de Pizzas en items individuales
@@ -565,7 +740,20 @@ class PizzeriaApp {
             let clone = { ...item };
             let menuItem = (this.menuItems || []).find(m => m.NOMBRE === item.name);
             
-            if (menuItem && this.normalize(menuItem.SECCION).includes('EXTRA')) clone.categoria = "Extra";
+            // Corrección: Para las promociones, borramos la variante del clon principal y asignamos categoría explícita
+            // para que en la hoja "Productos" (columna C) se anote exactamente el nombre limpio (ej. "Promo 1")
+            // y las bebidas/extras también viajen con su categoría explícita.
+            if (menuItem) {
+                const secNorm = this.normalize(menuItem.SECCION);
+                if (secNorm === 'PROMOCIONES' || (secNorm.includes('PROMO') && !item.isDocena)) {
+                    clone.variant = "";
+                    clone.categoria = "Promo";
+                } else if (secNorm.includes('BEBIDA')) {
+                    clone.categoria = "Bebida";
+                } else if (secNorm.includes('EXTRA')) {
+                    clone.categoria = "Extra";
+                }
+            }
             
             // Si es una Promo, primero la mandamos tal cual para sumar ventas de esa "Promo X"
             carritoModificado.push(clone);

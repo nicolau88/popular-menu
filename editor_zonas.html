@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Visual de Zonas de Envío | Pizzería Popular</title>
+    <link rel="icon" href="Pizzeria_Popular_1.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="zonas_envio.js?v=5"></script>
+    <style>
+        :root { --bg: #111; --panel: #1c1c1c; --primary: #FFC107; --accent: #FF3D00; --green: #00E676; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Panel Lateral de Control */
+        .sidebar { width: 390px; background: var(--panel); border-right: 2px solid var(--primary); display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 18px; gap: 15px; z-index: 1000; }
+        .brand { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
+        .brand img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--primary); }
+        .brand h1 { font-family: 'Oswald', sans-serif; font-size: 1.35rem; margin: 0; color: var(--primary); text-transform: uppercase; }
+        .brand small { color: #aaa; display: block; font-size: 0.8rem; }
+
+        .card { background: #141414; border: 1px solid #333; border-radius: 10px; padding: 14px; }
+        .card h3 { margin: 0 0 10px 0; font-family: 'Oswald', sans-serif; font-size: 1rem; color: var(--primary); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+
+        .branch-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .branch-btn { padding: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: #ccc; font-family: 'Oswald', sans-serif; font-size: 0.95rem; cursor: pointer; transition: 0.2s; }
+        .branch-btn.active { background: var(--primary); color: #000; font-weight: bold; border-color: var(--primary); }
+
+        .zone-selector { display: flex; flex-direction: column; gap: 8px; }
+        .zone-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 2px solid #333; background: #1f1f1f; cursor: pointer; transition: 0.2s; }
+        .zone-item.active { border-color: #fff; background: #2b2b2b; box-shadow: 0 0 10px rgba(255,255,255,0.15); }
+        .zone-dot { width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .grid-inputs label { font-size: 0.75rem; color: #bbb; display: block; margin-bottom: 3px; }
+        .grid-inputs input { width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #444; background: #0a0a0a; color: #fff; font-size: 0.9rem; }
+
+        .btn { width: 100%; padding: 10px 12px; border-radius: 8px; border: none; font-family: 'Oswald', sans-serif; font-size: 0.95rem; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; font-weight: 600; }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-primary:hover { background: #ffca28; }
+        .btn-green { background: #25D366; color: #fff; }
+        .btn-green:hover { background: #1ebe5d; }
+        .btn-outline { background: #262626; color: #ddd; border: 1px solid #444; }
+        .btn-outline:hover { background: #333; color: #fff; }
+        .btn-danger { background: rgba(255, 82, 82, 0.15); color: #ff5252; border: 1px solid #ff5252; }
+
+        /* Área del Mapa */
+        .map-area { flex: 1; position: relative; height: 100vh; }
+        #editor-map { width: 100%; height: 100%; }
+
+        .top-banner { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.92); border: 1px solid var(--primary); padding: 10px 18px; border-radius: 30px; z-index: 900; display: flex; align-items: center; gap: 15px; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(0,0,0,0.6); pointer-events: none; }
+        
+        /* Marcadores de vértices editables */
+        .vertex-handle { width: 16px !important; height: 16px !important; margin-left: -8px !important; margin-top: -8px !important; border-radius: 50%; border: 2px solid #000; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,0.8); cursor: grab; transition: transform 0.1s; }
+        .vertex-handle:hover { transform: scale(1.3); }
+
+        #toast-msg { position: fixed; bottom: 25px; right: 25px; background: #25D366; color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: bold; z-index: 9999; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="Pizzeria_Popular_1.png" alt="Logo">
+            <div>
+                <h1>Editor de Zonas</h1>
+                <small>Pizzería Popular — La Plata</small>
+            </div>
+        </div>
+
+        <!-- 1. Selección de Sucursal -->
+        <div class="card">
+            <h3><i class="fas fa-store"></i> 1. Elegí la Sucursal</h3>
+            <div class="branch-tabs">
+                <button class="branch-btn active" id="tab-suc1" onclick="cambiarSucursal('sucursal1')">
+                    Sucursal 1<br><small style="font-weight:normal; font-size:0.75rem;">6 esq. 66</small>
+                </button>
+                <button class="branch-btn" id="tab-suc2" onclick="cambiarSucursal('sucursal2')">
+                    Sucursal 2<br><small style="font-weight:normal; font-size:0.75rem;">Diag. 76 (18 y 43)</small>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Selección de Zona a Editar -->
+        <div class="card">
+            <h3><i class="fas fa-draw-polygon"></i> 2. Zona Activa para Editar</h3>
+            <p style="font-size:0.78rem; color:#aaa; margin:0 0 10px 0;">
+                Seleccioná una zona y <strong>arrastrá sus círculos blancos</strong> en el mapa para ajustar las calles.
+            </p>
+            <div class="zone-selector">
+                <div class="zone-item active" id="sel-zona-1" onclick="seleccionarZonaEdicion(1)">
+                    <div style="display:flex; align-items:center;">
+                        <span class="zone-dot" style="background:#00E676;"></span>
+                        <div>
+                            <strong>Zona 1</strong>
+                            <div style="font-size:0.75rem; color:#aaa;">ENVIO ZONA 1 ($3.000)</div>
+                        </div>
+                    </div>
+                    <span style="font-size:0.75rem; background:#222; padding:3px 7px; border-radius:4px;" id="count-v-1">4 esquinas</span>
+                </div>
+
+                <div class="zone-item" id="sel-zona-2" onclick="seleccionarZonaEdicion(2)">
+                    <div style="display:flex; align-items:center;">
+                        <span class="zone-dot" style="background:#FFC107;"></span>
+                        <div>
+                            <strong>Zona 2</strong>
+                            <div style="font-size:0.75rem; color:#aaa;">ENVIO ZONA 2 ($3.500)</div>
+                        </div>
+                    </div>
+                    <span style="font-size:0.75rem; background:#222; padding:3px 7px; border-radius:4px;" id="count-v-2">4 esquinas</span>
+                </div>
+
+                <div class="zone-item" id="sel-zona-3" onclick="seleccionarZonaEdicion(3)">
+                    <div style="display:flex; align-items:center;">
+                        <span class="zone-dot" style="background:#FF5722;"></span>
+                        <div>
+                            <strong>Zona 3</strong>
+                            <div style="font-size:0.75rem; color:#aaa;">ENVIO ZONA 3 ($4.000)</div>
+                        </div>
+                    </div>
+                    <span style="font-size:0.75rem; background:#222; padding:3px 7px; border-radius:4px;" id="count-v-3">4 esquinas</span>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <button class="btn btn-outline" style="font-size:0.8rem; padding:8px;" onclick="agregarVerticeZonaActiva()">
+                    <i class="fas fa-plus-circle"></i> Sumar Esquina (5+ lados)
+                </button>
+                <button class="btn btn-outline" style="font-size:0.8rem; padding:8px;" onclick="quitarUltimoVertice()">
+                    <i class="fas fa-minus-circle"></i> Quitar Esquina
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Generador Rápido por Calles de La Plata -->
+        <div class="card">
+            <h3><i class="fas fa-road"></i> Armado Rápido por Calles</h3>
+            <p style="font-size:0.76rem; color:#aaa; margin:0;">
+                ¿Querés encuadrar la <strong id="lbl-zona-cuadrante" style="color:#fff;">Zona 1</strong> por calles exactas del casco de La Plata?
+            </p>
+            <div class="grid-inputs">
+                <div>
+                    <label>Desde Calle (Eje 1 a 31):</label>
+                    <input type="number" id="inp-calle-norte" value="1" placeholder="Ej: 1">
+                </div>
+                <div>
+                    <label>Hasta Calle (Eje 1 a 31):</label>
+                    <input type="number" id="inp-calle-sur" value="13" placeholder="Ej: 13">
+                </div>
+                <div>
+                    <label>Desde Calle (Eje 32 a 90):</label>
+                    <input type="number" id="inp-calle-oeste" value="56" placeholder="Ej: 54">
+                </div>
+                <div>
+                    <label>Hasta Calle (Eje 32 a 90):</label>
+                    <input type="number" id="inp-calle-este" value="76" placeholder="Ej: 72">
+                </div>
+            </div>
+            <button class="btn btn-outline" style="margin-top:10px;" onclick="aplicarCuadrantePorCalles()">
+                <i class="fas fa-magic"></i> Encuadrar Zona en esas 4 Calles
+            </button>
+        </div>
+
+        <!-- 4. Guardar y Probar -->
+        <div class="card" style="border-color: var(--primary);">
+            <h3><i class="fas fa-save"></i> 3. Guardar y Aplicar</h3>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button class="btn btn-green" onclick="guardarCambiosLocal()">
+                    <i class="fas fa-check-circle"></i> Guardar Zonas y Aplicar a la App
+                </button>
+                <button class="btn btn-primary" onclick="copiarJSONPortapapeles()">
+                    <i class="fas fa-copy"></i> Copiar Coordenadas (Para el Código)
+                </button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:4px;">
+                    <a href="index.html" target="_blank" class="btn btn-outline" style="text-decoration:none; font-size:0.8rem;">
+                        <i class="fas fa-external-link-alt"></i> Ver Web Suc 1
+                    </a>
+                    <a href="app_sucursal2.html" target="_blank" class="btn btn-outline" style="text-decoration:none; font-size:0.8rem;">
+                        <i class="fas fa-external-link-alt"></i> Ver Web Suc 2
+                    </a>
+                </div>
+                <button class="btn btn-danger" style="margin-top:6px; font-size:0.8rem; padding:7px;" onclick="restaurarFabrica()">
+                    <i class="fas fa-undo"></i> Restaurar Zonas Iniciales de Muestra
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="map-area">
+        <div class="top-banner" id="banner-simulador">
+            <span><i class="fas fa-hand-pointer" style="color:var(--primary);"></i> <strong>Tip:</strong> Arrastrá los puntos blancos para moldear cada zona, o hacé clic en cualquier cuadra para probar qué zona detecta.</span>
+        </div>
+        <div id="editor-map"></div>
+    </main>
+
+    <div id="toast-msg">✅ Zonas guardadas correctamente</div>
+
+    <script>
+        let configCompleta = GestorZonasEnvio.obtenerConfigCompleta();
+        let sucursalActiva = 'sucursal1';
+        let zonaActivaId = 1;
+
+        let map = L.map('editor-map', {
+            center: configCompleta.sucursal1.centro,
+            zoom: 14
+        });
+
+        const osmEditorLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        osmEditorLayer.on('tileerror', function(err) {
+            if (err && err.tile && !err.tile.dataset.fallbackApplied) {
+                err.tile.dataset.fallbackApplied = '1';
+                err.tile.src = err.tile.src.replace('https://tile.openstreetmap.org/', 'https://a.tile.openstreetmap.fr/hot/');
+            }
+        });
+
+        let capasPoligonos = {};
+        let marcadoresVertices = [];
+        let marcadorSucursal = null;
+        let marcadorPrueba = null;
+
+        function renderizarTodo() {
+            // Limpiar polígonos y vértices previos
+            Object.values(capasPoligonos).forEach(p => map.removeLayer(p));
+            capasPoligonos = {};
+            marcadoresVertices.forEach(m => map.removeLayer(m));
+            marcadoresVertices = [];
+            if (marcadorSucursal) map.removeLayer(marcadorSucursal);
+
+            const suc = configCompleta[sucursalActiva];
+
+            // Dibujar ícono de la pizzería
+            const iconoPizza = L.divIcon({
+                className: '',
+                html: `<div style="background:#FF3D00; color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #FFC107; box-shadow:0 3px 10px rgba(0,0,0,0.6); font-size:18px;">🍕</div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+            marcadorSucursal = L.marker(suc.centro, { icon: iconoPizza })
+                .addTo(map)
+                .bindPopup(`<b>🍕 ${suc.nombre}</b><br>${suc.direccion}`);
+
+            // Dibujar los 3 polígonos (de Zona 3 a Zona 1)
+            const zonasOrden = [...suc.zonas].sort((a, b) => b.id - a.id);
+            zonasOrden.forEach(z => {
+                const esActiva = (z.id === zonaActivaId);
+                const poly = L.polygon(z.puntos, {
+                    color: z.color,
+                    weight: esActiva ? 4 : 2,
+                    dashArray: esActiva ? null : '6, 6',
+                    fillColor: z.color,
+                    fillOpacity: esActiva ? 0.28 : 0.12,
+                    interactive: false
+                }).addTo(map);
+                capasPoligonos[z.id] = poly;
+
+                const badgeCount = document.getElementById(`count-v-${z.id}`);
+                if (badgeCount) badgeCount.textContent = `${z.puntos.length} esquinas`;
+            });
+
+            // Crear marcadores arrastrables para los vértices de la Zona Activa
+            const zonaEdit = suc.zonas.find(z => z.id === zonaActivaId);
+            if (zonaEdit) {
+                zonaEdit.puntos.forEach((pt, idx) => {
+                    const handleIcon = L.divIcon({
+                        className: 'vertex-handle',
+                        html: `<div style="width:100%;height:100%;border-radius:50%;background:${zonaEdit.color};border:2px solid #fff;"></div>`
+                    });
+
+                    const marker = L.marker(pt, {
+                        icon: handleIcon,
+                        draggable: true
+                    }).addTo(map);
+
+                    marker.bindTooltip(`Esquina #${idx + 1} (${zonaEdit.nombre}) — Arrastrar`, { direction: 'top' });
+
+                    marker.on('drag', (e) => {
+                        const pos = e.target.getLatLng();
+                        zonaEdit.puntos[idx] = [Number(pos.lat.toFixed(6)), Number(pos.lng.toFixed(6))];
+                        capasPoligonos[zonaEdit.id].setLatLngs(zonaEdit.puntos);
+                    });
+
+                    marker.on('dragend', () => {
+                        guardarCambiosLocal(true);
+                    });
+
+                    // Clic derecho sobre un vértice lo elimina (si hay más de 3)
+                    marker.on('contextmenu', () => {
+                        if (zonaEdit.puntos.length <= 3) {
+                            alert('Un polígono necesita al menos 3 esquinas.');
+                            return;
+                        }
+                        zonaEdit.puntos.splice(idx, 1);
+                        renderizarTodo();
+                        guardarCambiosLocal(true);
+                    });
+
+                    marcadoresVertices.push(marker);
+                });
+            }
+        }
+
+        // Probar qué zona detecta al hacer clic en cualquier calle del mapa
+        map.on('click', (e) => {
+            const { lat, lng } = e.latlng;
+            GestorZonasEnvio.guardarConfigCompleta(configCompleta);
+            const detectada = GestorZonasEnvio.detectarZona(lat, lng, sucursalActiva);
+
+            if (marcadorPrueba) map.removeLayer(marcadorPrueba);
+            marcadorPrueba = L.circleMarker([lat, lng], {
+                radius: 7,
+                color: '#fff',
+                fillColor: detectada ? detectada.color : '#FF5252',
+                fillOpacity: 1
+            }).addTo(map);
+
+            const textoPopup = detectada
+                ? `<b>✅ ${detectada.nombre}</b><br>Costo: <b>$${detectada.precioDefault.toLocaleString('es-AR')}</b>`
+                : `<b>❌ Fuera de Zona de Cobertura</b>`;
+
+            marcadorPrueba.bindPopup(textoPopup).openPopup();
+        });
+
+        function cambiarSucursal(sucKey) {
+            sucursalActiva = sucKey;
+            document.getElementById('tab-suc1').classList.toggle('active', sucKey === 'sucursal1');
+            document.getElementById('tab-suc2').classList.toggle('active', sucKey === 'sucursal2');
+            if (marcadorPrueba) map.removeLayer(marcadorPrueba);
+            map.setView(configCompleta[sucKey].centro, 14);
+            renderizarTodo();
+        }
+
+        function seleccionarZonaEdicion(id) {
+            zonaActivaId = id;
+            [1, 2, 3].forEach(n => {
+                document.getElementById(`sel-zona-${n}`).classList.toggle('active', n === id);
+            });
+            document.getElementById('lbl-zona-cuadrante').textContent = `Zona ${id}`;
+            renderizarTodo();
+        }
+
+        function agregarVerticeZonaActiva() {
+            const suc = configCompleta[sucursalActiva];
+            const zonaEdit = suc.zonas.find(z => z.id === zonaActivaId);
+            if (!zonaEdit || zonaEdit.puntos.length < 2) return;
+
+            // Insertar un nuevo punto en el medio entre el último y el primero
+            const pA = zonaEdit.puntos[zonaEdit.puntos.length - 1];
+            const pB = zonaEdit.puntos[0];
+            const nuevo = [
+                Number(((pA[0] + pB[0]) / 2).toFixed(6)),
+                Number(((pA[1] + pB[1]) / 2).toFixed(6))
+            ];
+            zonaEdit.puntos.push(nuevo);
+            renderizarTodo();
+            guardarCambiosLocal(true);
+        }
+
+        function quitarUltimoVertice() {
+            const suc = configCompleta[sucursalActiva];
+            const zonaEdit = suc.zonas.find(z => z.id === zonaActivaId);
+            if (!zonaEdit || zonaEdit.puntos.length <= 3) {
+                alert('Cada zona debe tener mínimo 3 esquinas.');
+                return;
+            }
+            zonaEdit.puntos.pop();
+            renderizarTodo();
+            guardarCambiosLocal(true);
+        }
+
+        function aplicarCuadrantePorCalles() {
+            const cNorte = parseFloat(document.getElementById('inp-calle-norte').value);
+            const cSur = parseFloat(document.getElementById('inp-calle-sur').value);
+            const cOeste = parseFloat(document.getElementById('inp-calle-oeste').value);
+            const cEste = parseFloat(document.getElementById('inp-calle-este').value);
+
+            if ([cNorte, cSur, cOeste, cEste].some(isNaN)) {
+                alert('Ingresá los 4 números de calle.');
+                return;
+            }
+
+            const suc = configCompleta[sucursalActiva];
+            const zonaEdit = suc.zonas.find(z => z.id === zonaActivaId);
+            zonaEdit.puntos = crearCuadranteLaPlata(cNorte, cSur, cOeste, cEste);
+            renderizarTodo();
+            guardarCambiosLocal();
+        }
+
+        function guardarCambiosLocal(silencioso = false) {
+            GestorZonasEnvio.guardarConfigCompleta(configCompleta);
+            if (!silencioso) mostrarToast('✅ Zonas guardadas y activas en la App');
+        }
+
+        function copiarJSONPortapapeles() {
+            GestorZonasEnvio.guardarConfigCompleta(configCompleta);
+            const jsonStr = JSON.stringify(configCompleta, null, 2);
+            navigator.clipboard.writeText(jsonStr).then(() => {
+                mostrarToast('📋 Coordenadas copiadas al portapapeles');
+            });
+        }
+
+        function restaurarFabrica() {
+            if (!confirm('¿Volver a las zonas de muestra originales en ambas sucursales?')) return;
+            configCompleta = GestorZonasEnvio.restaurarDefault();
+            renderizarTodo();
+            mostrarToast('🔄 Zonas restauradas a valores iniciales');
+        }
+
+        function mostrarToast(texto) {
+            const t = document.getElementById('toast-msg');
+            t.textContent = texto;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 2600);
+        }
+
+        // Inicializar al cargar
+        renderizarTodo();
+    </script>
+</body>
+</html>

@@ -27,9 +27,9 @@ input[type=number] { -moz-appearance: textfield; }
 .btn-producto .precio { color: var(--primary); font-family: 'Oswald', sans-serif; font-size: 1.1rem; margin-top: auto; }
 .btn-producto .variante { font-size: 0.7rem; color: #aaa; background: #333; padding: 2px 5px; border-radius: 3px; margin-bottom: 3px; }
 
-.panel-ticket { flex: 1; min-width: 350px; max-width: 420px; background: var(--bg-panel); display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; border-left: 2px solid #000; }
+.panel-ticket { flex: 1; min-width: 350px; max-width: 420px; background: var(--bg-panel); display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; border-left: 2px solid #000; overflow-y: auto; }
 .ticket-header { font-family: 'Oswald', sans-serif; font-size: 1.5rem; color: white; margin-bottom: 15px; border-bottom: 2px dashed #444; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-.lista-items { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+.lista-items { flex: 1; overflow-y: auto; margin-bottom: 15px; min-height: 150px; }
 .item-cart { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; font-size: 0.9rem; }
 .item-cart-controles { display: flex; align-items: center; gap: 8px; }
 .btn-qty { background: #444; border: none; color: white; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; font-weight: bold; }
@@ -87,3 +87,28 @@ input[type=number] { -moz-appearance: textfield; }
     .t-desc { font-size: 12px; margin-left: 10px; display: block; font-style: normal !important; text-transform: uppercase;}
     .t-var { margin-left:10px; font-size:12px; }
 }
+
+/* STOCK BADGE */
+.stock-badge {
+    background: #222;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    margin-top: 5px;
+    font-weight: bold;
+    display: inline-block;
+}
+.stock-low {
+    color: #FF3D00;
+    border-color: #FF3D00;
+    background: rgba(255, 61, 0, 0.1);
+}
+
+/* BOTONES DE ZONA DE ENVÍO EN POS */
+.opciones-zona-envio { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 2px; }
+.btn-zona-pos { background: #262626; color: #eee; border: 1px solid #555; border-radius: 6px; padding: 8px 4px; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 0.82rem; line-height: 1.25; text-align: center; transition: 0.2s; }
+.btn-zona-pos strong { font-family: 'Oswald', sans-serif; font-size: 1rem; color: var(--primary); display: block; }
+.btn-zona-pos:hover { background: #333; border-color: var(--primary); }
+.btn-zona-pos.active { background: rgba(255, 193, 7, 0.18); border: 2px solid var(--primary); color: #fff; }
